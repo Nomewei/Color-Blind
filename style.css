@@ -167,6 +167,24 @@ body {
     z-index: 50;
 }
 
+/* Estilos para el modal de Game Over */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 100;
+}
+.winner-text {
+    animation: bounce 1s ease-in-out;
+}
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
 /* Media Query para mejorar la vista en móviles */
 @media (max-width: 1023px) { /* lg breakpoint */
     .card {
@@ -179,7 +197,6 @@ body {
         width: 1.5rem;
         height: 1.5rem;
     }
-    /* FIX 1: Pista fija en móvil */
     #clue-display {
         position: sticky;
         top: 1rem;
@@ -187,6 +204,6 @@ body {
         z-index: 20;
         padding: 0.5rem;
         border-radius: 0.5rem;
-        margin-top: -1rem; /* Compensa el padding del card */
+        margin-top: -1rem;
     }
 }
