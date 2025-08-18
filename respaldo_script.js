@@ -1,6 +1,6 @@
 // Importa las funciones necesarias de Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, setLogLevel, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, setLogLevel, doc, getDoc, setDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 // --- CONFIGURACIÓN DE FIREBASE ---
@@ -24,6 +24,7 @@ let currentUserId = null;
 let currentGameId = null;
 let unsubscribeGame = null;
 let temporaryGuess = null; // Para la pre-selección
+let currentHostId = null; // Para saber quién es el host actual
 const playerColors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#3182CE', '#5A67D8', '#805AD5', '#D53F8C', '#718096', '#4A5568'];
 const GRID_COLS = 30;
 const GRID_ROWS = 20;
@@ -110,10 +111,17 @@ function cancelLeave() {
     confirmLeaveModal.classList.add('hidden');
 }
 
-function executeLeave() {
+async function executeLeave() {
     if (unsubscribeGame) unsubscribeGame();
+    
+    if (currentUserId === currentHostId && currentGameId) {
+        const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+        await deleteDoc(gameRef);
+    }
+
     localStorage.removeItem('hues-cues-game');
     currentGameId = null;
+    currentHostId = null;
     confirmLeaveModal.classList.add('hidden');
     showScreen('lobby');
 }
@@ -241,11 +249,13 @@ function subscribeToGame(gameId) {
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
     unsubscribeGame = onSnapshot(gameRef, (doc) => {
         if (doc.exists()) {
-            updateUI(doc.data());
+            const gameData = doc.data();
+            currentHostId = gameData.hostId;
+            updateUI(gameData);
         } else {
             localStorage.removeItem('hues-cues-game');
-            alert("La partida ya no existe.");
-            showScreen('lobby');
+            alert("El anfitrión ha terminado la partida.");
+            executeLeave();
         }
     });
 }
@@ -319,6 +329,7 @@ function pickRandomCard() {
 
 function updateUI(gameData) {
     if (gameData.gameState === 'waiting') {
+        gameOverModal.classList.add('hidden');
         showScreen('waiting-room');
         document.getElementById('game-id-display').textContent = currentGameId;
         const playerList = document.getElementById('player-list');
@@ -385,6 +396,8 @@ function renderBoard(gameData) {
     document.querySelectorAll('.player-marker, .temp-marker').forEach(el => el.remove());
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
+    const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
+    const isCueGiver = currentUserId === cueGiverId;
 
     const drawMarker = (guess, player, isTemp = false) => {
         const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
@@ -398,7 +411,7 @@ function renderBoard(gameData) {
     };
 
     if (gameData.guesses) {
-        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
+        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || isCueGiver) {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
