@@ -81,7 +81,6 @@ body {
 /* Contenedor de la cuadrícula */
 #color-grid-container {
     position: relative;
-    /* overflow: hidden; <- ELIMINADO PARA ARREGLAR EL ZOOM */
 }
 
 /* Cuadrícula de colores */
@@ -93,7 +92,7 @@ body {
     max-width: 1200px;
     margin: auto;
     border-radius: 8px;
-    overflow: hidden; /* Se mantiene aquí para las esquinas de la cuadrícula */
+    overflow: hidden;
     border: 2px solid #444;
 }
 .color-cell {
@@ -250,10 +249,10 @@ body {
     }
     .card.order-1 { /* El card principal del juego */
         position: relative;
-        padding-top: 6rem; /* Espacio para la pista fija */
+        padding-top: 5rem; /* Espacio para la pista fija */
     }
     .color-grid {
-        min-height: 250px;
+        min-height: 300px;
     }
     .palette-square {
         width: 1.5rem;
@@ -265,5 +264,18 @@ body {
         left: 1.5rem;
         right: 1.5rem;
         z-index: 20;
+        height: auto !important; /* Anula la altura fija */
+    }
+    #clue-display span {
+        font-size: 1.1rem; /* Pista más pequeña */
+        padding: 0.25rem 0.75rem;
+    }
+    #cue-giver-view {
+        padding: 0.5rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    #secret-color-display {
+        width: 4rem !important;
+        height: 1.5rem !important;
     }
 }
