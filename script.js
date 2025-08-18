@@ -42,6 +42,11 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserId = user.uid;
         console.log("Usuario autenticado:", currentUserId);
+        // Intenta volver a unirte a una partida si estabas en una
+        const lastGame = JSON.parse(localStorage.getItem('hues-cues-game'));
+        if (lastGame && lastGame.gameId) {
+            rejoinGame(lastGame.gameId, lastGame.userId);
+        }
     } else {
         console.log("Iniciando sesión anónima...");
         try {
@@ -96,6 +101,7 @@ async function createGame() {
 
     try {
         await setDoc(gameRef, gameData);
+        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: currentUserId }));
         subscribeToGame(gameId);
         showScreen('waiting-room');
     } catch (error) {
@@ -123,12 +129,26 @@ async function joinGame() {
     }
 
     const gameData = gameSnap.data();
+    
+    // FIX 1: Permitir volver a unirse si la partida ha comenzado
+    if (gameData.gameState !== 'waiting') {
+        // Comprueba si algún jugador en la partida tiene el mismo nombre
+        const playerEntry = Object.entries(gameData.players).find(([id, p]) => p.name === playerName);
+        if (playerEntry) {
+            const existingPlayerId = playerEntry[0];
+            console.log(`El jugador ${playerName} ya existe con ID ${existingPlayerId}, permitiendo que vuelva a unirse.`);
+            localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: existingPlayerId }));
+            currentUserId = existingPlayerId; // Asigna el ID correcto para la sesión
+            rejoinGame(gameId, existingPlayerId);
+            return;
+        } else {
+            document.getElementById('lobby-error').textContent = 'La partida ya ha comenzado y no eres un jugador existente.';
+            return;
+        }
+    }
+    
     if (Object.keys(gameData.players).length >= 10) {
         document.getElementById('lobby-error').textContent = 'La partida está llena.';
-        return;
-    }
-     if (gameData.gameState !== 'waiting') {
-        document.getElementById('lobby-error').textContent = 'La partida ya ha comenzado.';
         return;
     }
 
@@ -145,6 +165,7 @@ async function joinGame() {
 
     try {
         await updateDoc(gameRef, { players: updatedPlayers, playerOrder: updatedPlayerOrder });
+        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: currentUserId }));
         currentGameId = gameId;
         subscribeToGame(gameId);
         showScreen('waiting-room');
@@ -153,6 +174,21 @@ async function joinGame() {
         document.getElementById('lobby-error').textContent = 'No se pudo unir a la partida.';
     }
 }
+
+async function rejoinGame(gameId, userId) {
+    const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
+    const gameSnap = await getDoc(gameRef);
+    if (gameSnap.exists()) {
+        console.log(`Reconectando a la partida ${gameId}`);
+        currentGameId = gameId;
+        currentUserId = userId; // Asegúrate de que el ID de usuario es el correcto
+        subscribeToGame(gameId);
+    } else {
+        console.log("La partida a la que intentabas reconectarte ya no existe.");
+        localStorage.removeItem('hues-cues-game');
+    }
+}
+
 
 function subscribeToGame(gameId) {
     if (unsubscribeGame) unsubscribeGame();
@@ -164,6 +200,7 @@ function subscribeToGame(gameId) {
             updateUI(gameData);
         } else {
             console.log("La partida ha sido eliminada.");
+            localStorage.removeItem('hues-cues-game');
             alert("La partida ya no existe.");
             showScreen('lobby');
         }
@@ -173,7 +210,6 @@ function subscribeToGame(gameId) {
 function copyGameId() {
     const gameId = document.getElementById('game-id-display').textContent;
     navigator.clipboard.writeText(gameId).then(() => {
-        // Simple visual feedback
         const display = document.getElementById('game-id-display');
         const originalText = display.textContent;
         display.textContent = '¡Copiado!';
@@ -211,8 +247,8 @@ async function startGame() {
         alert("Solo el creador de la partida puede empezar.");
         return;
     }
-    if (Object.keys(gameData.players).length < 3) {
-         alert("Se necesitan al menos 3 jugadores para empezar.");
+    if (Object.keys(gameData.players).length < 2) { // Cambiado a 2 para pruebas, puedes volver a poner 3
+         alert("Se necesitan al menos 2 jugadores para empezar.");
         return;
     }
     
@@ -304,6 +340,7 @@ function renderBoard(gameData) {
 
         function drawScoringBox(size, id) {
             const box = document.getElementById(id);
+            if (!box || !cellWidth) return;
             box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
             box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
             box.style.width = `${size * (cellWidth + gap) - gap}px`;
@@ -327,15 +364,27 @@ function renderGameInfo(gameData) {
     const isCueGiver = currentUserId === cueGiverId;
 
     let statusHTML = `<p><strong>Ronda:</strong> ${gameData.currentRound}</p>`;
-    statusHTML += `<p><strong>Turno de dar pista:</strong> ${cueGiver.name}</p>`;
+    statusHTML += `<p><strong>Dador de pista:</strong> ${cueGiver.name}</p>`;
     
-    if (gameData.gameState.includes('giving_clue')) {
-        statusHTML += `<p class="text-cyan-400 font-semibold">Esperando pista...</p>`;
-    } else if (gameData.gameState.includes('guessing')) {
-        statusHTML += `<p class="text-yellow-400 font-semibold">¡Adivinando!</p>`;
+    // FIX 2: Mostrar de quién es el turno de adivinar
+    if (gameData.gameState.includes('guessing')) {
+        const requiredGuesses = gameData.gameState === 'guessing_1' ? 1 : 2;
+        const playersToGuess = gameData.playerOrder
+            .filter(pid => pid !== cueGiverId) // Todos excepto el que da la pista
+            .filter(pid => (gameData.guesses[pid]?.length || 0) < requiredGuesses) // Que no hayan adivinado aún
+            .map(pid => gameData.players[pid].name); // Obtener sus nombres
+
+        if (playersToGuess.length > 0) {
+            statusHTML += `<p class="text-yellow-400 font-semibold">Turno de adivinar de:<br>${playersToGuess.join(', ')}</p>`;
+        } else {
+            statusHTML += `<p class="text-gray-400 font-semibold">Todos han adivinado.</p>`;
+        }
+    } else if (gameData.gameState.includes('giving_clue')) {
+        statusHTML += `<p class="text-cyan-400 font-semibold">Esperando pista de ${cueGiver.name}...</p>`;
     } else if (gameData.gameState === 'scoring') {
         statusHTML += `<p class="text-green-400 font-semibold">Puntuando...</p>`;
     }
+
     infoContainer.innerHTML = statusHTML;
     
     clueDisplay.innerHTML = (gameData.clues || []).map((clue) => `<span>${clue}</span>`).join('');
@@ -365,8 +414,12 @@ function renderControls(gameData) {
             controlsContainer.innerHTML = createClueInputHTML(2);
             document.getElementById('submit-clue-btn').onclick = () => submitClue(2);
         } else if (gameData.gameState === 'guessing_2') {
-            controlsContainer.innerHTML = `<button id="reveal-btn" class="btn-primary" style="background-color: #ef4444;">Revelar Color</button>`;
-            document.getElementById('reveal-btn').onclick = reveal;
+             const guessers = gameData.playerOrder.filter(id => id !== cueGiverId);
+             const allHaveGuessed = guessers.every(id => (gameData.guesses[id]?.length || 0) >= 2);
+             if(allHaveGuessed){
+                controlsContainer.innerHTML = `<button id="reveal-btn" class="btn-primary" style="background-color: #ef4444;">Revelar Color</button>`;
+                document.getElementById('reveal-btn').onclick = reveal;
+             }
         }
     } else {
         if (gameData.gameState === 'guessing_1' && myGuesses.length === 0) {
