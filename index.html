@@ -50,9 +50,10 @@
 
         <!-- Game Screen -->
         <div id="game-screen" class="hidden w-full fade-in">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Cambiado a flexbox para mejor responsividad -->
+            <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Panel: Game Info & Players -->
-                <div class="lg:col-span-1 card flex flex-col">
+                <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
                     <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
                     <div id="game-info" class="mb-4 space-y-3">
                         <!-- Game status will be populated here -->
@@ -66,7 +67,7 @@
                 </div>
 
                 <!-- Main Panel: Color Grid -->
-                <div class="lg:col-span-3 card">
+                <div class="lg:w-3/4 card order-1 lg:order-2">
                     <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
                         <p>Tu color secreto es:</p>
                         <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
