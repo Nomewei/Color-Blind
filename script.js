@@ -440,8 +440,7 @@ function renderBoard(gameData) {
         }
     });
     
-    const scoringFrame = document.getElementById('scoring-frame');
-    scoringFrame.classList.add('hidden');
+    document.querySelectorAll('.scoring-overlay').forEach(el => el.classList.add('hidden'));
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
     const isCueGiver = currentUserId === cueGiverId;
 
@@ -488,15 +487,22 @@ function renderBoard(gameData) {
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
 
-        const cellSize = cell.offsetWidth;
+        const cellWidth = cell.offsetWidth;
+        const cellHeight = cell.offsetHeight;
         const gap = 1;
 
-        scoringFrame.style.setProperty('--cell-size', `${cellSize + gap}px`);
-        scoringFrame.style.width = `${cellSize}px`;
-        scoringFrame.style.height = `${cellSize}px`;
-        scoringFrame.style.left = `${cell.offsetLeft}px`;
-        scoringFrame.style.top = `${cell.offsetTop}px`;
-        scoringFrame.classList.remove('hidden');
+        function drawScoringBox(size, id) {
+            const box = document.getElementById(id);
+            box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
+            box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
+            box.style.width = `${size * (cellWidth + gap) - gap}px`;
+            box.style.height = `${size * (cellHeight + gap) - gap}px`;
+            box.classList.remove('hidden');
+        }
+        
+        drawScoringBox(1, 'scoring-box-3');
+        drawScoringBox(3, 'scoring-box-2');
+        drawScoringBox(5, 'scoring-box-1');
     }
 }
 
