@@ -69,7 +69,7 @@ body {
 .color-grid {
     display: grid;
     grid-template-columns: repeat(30, 1fr);
-    gap: 2px;
+    gap: 1px; /* Reducido para pantallas pequeñas */
     width: 100%;
     max-width: 1200px;
     margin: auto;
@@ -139,4 +139,14 @@ body {
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
     color: #f0f9ff;
+}
+
+/* Media Query para mejorar la vista en móviles */
+@media (max-width: 640px) {
+    .card {
+        padding: 1.5rem;
+    }
+    .color-grid {
+        min-height: 250px; /* Asegura un tamaño mínimo para el tablero */
+    }
 }
