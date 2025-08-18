@@ -27,8 +27,8 @@ let temporaryGuess = null; // Para la pre-selección
 let currentHostId = null; // Para saber quién es el host actual
 const playerColors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#3182CE', '#5A67D8', '#805AD5', '#D53F8C', '#718096', '#4A5568'];
 const GRID_COLS = 30;
-const GRID_ROWS = 20;
-const COORD_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').concat(["AA", "AB", "AC", "AD"]);
+const GRID_ROWS = 16; // FIX 1: Ajustado a 16 filas
+const COORD_LETTERS = "ABCDEFGHIJKLMNOP".split(''); // FIX 1: Ajustado a 16 letras
 const FORBIDDEN_WORDS = [
     'rojo', 'verde', 'azul', 'amarillo', 'naranja', 'morado', 'violeta', 'rosa', 'marrón',
     'negro', 'blanco', 'gris', 'cian', 'magenta', 'turquesa', 'lila', 'fucsia', 'celeste',
@@ -298,26 +298,57 @@ function copyGameId() {
 }
 
 // --- LÓGICA DEL JUEGO ---
+// FIX 1: Función para interpolar colores en HSL
+function lerpColor(hsl1, hsl2, factor) {
+    let h = hsl1[0] + (hsl2[0] - hsl1[0]) * factor;
+    let s = hsl1[1] + (hsl2[1] - hsl1[1]) * factor;
+    let l = hsl1[2] + (hsl2[2] - hsl1[2]) * factor;
+    return [h, s, l];
+}
+
 function generateColorGrid() {
     colorGrid.innerHTML = '';
+
+    // FIX 1: Puntos de color de referencia para la interpolación
+    const colorStops = {
+        topLeft: [10, 85, 60], // Rojo-Naranja
+        topMid: [320, 80, 70], // Fucsia
+        topRight: [260, 80, 65], // Púrpura
+        bottomLeft: [60, 90, 60], // Amarillo
+        bottomMid: [140, 70, 45], // Verde
+        bottomRight: [190, 80, 50], // Cian
+    };
+
     for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
             const cell = document.createElement('div');
             cell.classList.add('color-cell');
+
+            const xFactor = x / (GRID_COLS - 1);
+            const yFactor = y / (GRID_ROWS - 1);
+
+            let topColor, bottomColor;
+
+            if (xFactor < 0.5) {
+                topColor = lerpColor(colorStops.topLeft, colorStops.topMid, xFactor * 2);
+                bottomColor = lerpColor(colorStops.bottomLeft, colorStops.bottomMid, xFactor * 2);
+            } else {
+                topColor = lerpColor(colorStops.topMid, colorStops.topRight, (xFactor - 0.5) * 2);
+                bottomColor = lerpColor(colorStops.bottomMid, colorStops.bottomRight, (xFactor - 0.5) * 2);
+            }
+
+            const finalColor = lerpColor(topColor, bottomColor, yFactor);
             
-            const hue = (x / GRID_COLS) * 340;
-            const saturation = 40 + (y / GRID_ROWS) * 60;
-            const lightness = 90 - (y / GRID_ROWS) * 60;
-            
-            cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+            cell.style.backgroundColor = `hsl(${finalColor[0]}, ${finalColor[1]}%, ${finalColor[2]}%)`;
             cell.dataset.x = x;
             cell.dataset.y = y;
-            cell.dataset.coords = `${COORD_LETTERS[x]}${y + 1}`;
-            cell.title = `${COORD_LETTERS[x]}${y + 1}`;
+            cell.dataset.coords = `${COORD_LETTERS[y]}${x + 1}`;
+            cell.title = `${COORD_LETTERS[y]}${x + 1}`;
             colorGrid.appendChild(cell);
         }
     }
 }
+
 
 async function startGame() {
     if (!currentGameId) return;
@@ -348,10 +379,8 @@ async function startGame() {
 function pickRandomCard() {
     const x = Math.floor(Math.random() * GRID_COLS);
     const y = Math.floor(Math.random() * GRID_ROWS);
-    const hue = (x / GRID_COLS) * 340;
-    const saturation = 40 + (y / GRID_ROWS) * 60;
-    const lightness = 90 - (y / GRID_ROWS) * 60;
-    return { x, y, color: `hsl(${hue}, ${saturation}%, ${lightness}%)` };
+    const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
+    return { x, y, color: cell.style.backgroundColor };
 }
 
 function updateUI(gameData) {
@@ -540,7 +569,7 @@ function renderGameInfo(gameData) {
     if (currentUserId === cueGiverId && gameData.gameState !== 'scoring') {
         cueGiverView.classList.remove('hidden');
         document.getElementById('secret-color-display').style.backgroundColor = gameData.currentCard.color;
-        document.getElementById('secret-color-coords').textContent = `${COORD_LETTERS[gameData.currentCard.x]}${gameData.currentCard.y + 1}`;
+        document.getElementById('secret-color-coords').textContent = `${COORD_LETTERS[gameData.currentCard.y]}${gameData.currentCard.x + 1}`;
     } else {
         cueGiverView.classList.add('hidden');
     }
