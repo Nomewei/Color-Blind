@@ -23,11 +23,11 @@ const APP_ID = 'hues-and-cues-online';
 let currentUserId = null;
 let currentGameId = null;
 let unsubscribeGame = null;
+let temporaryGuess = null; // Para la pre-selección
 const playerColors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#3182CE', '#5A67D8', '#805AD5', '#D53F8C', '#718096', '#4A5568'];
 const GRID_COLS = 30;
 const GRID_ROWS = 20;
 const COORD_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').concat(["AA", "AB", "AC", "AD"]);
-// FIX 1: Lista de palabras prohibidas relacionadas con colores
 const FORBIDDEN_WORDS = [
     'rojo', 'verde', 'azul', 'amarillo', 'naranja', 'morado', 'violeta', 'rosa', 'marrón',
     'negro', 'blanco', 'gris', 'cian', 'magenta', 'turquesa', 'lila', 'fucsia', 'celeste',
@@ -45,6 +45,44 @@ const gameScreen = document.getElementById('game-screen');
 const colorGrid = document.getElementById('color-grid');
 const confirmLeaveModal = document.getElementById('confirm-leave-modal');
 const gameOverModal = document.getElementById('game-over-modal');
+const soundToggle = document.getElementById('sound-toggle');
+
+// --- LÓGICA DE AUDIO ---
+let isMuted = true;
+let music;
+const synth = new Tone.Synth().toDestination();
+
+const soundIcons = {
+    muted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`,
+    unmuted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`
+};
+
+function playSound(note = "C4") {
+    if (!isMuted) {
+        synth.triggerAttackRelease(note, "8n");
+    }
+}
+
+function toggleMusic() {
+    if (isMuted) {
+        Tone.start();
+        if (!music) {
+            music = new Tone.Loop(time => {
+                synth.triggerAttackRelease("C2", "2n", time);
+                synth.triggerAttackRelease("G2", "2n", time + Tone.Time("2n").toSeconds());
+            }, "1m").start(0);
+        }
+        Tone.Transport.start();
+        isMuted = false;
+        soundToggle.innerHTML = soundIcons.unmuted;
+    } else {
+        Tone.Transport.stop();
+        isMuted = true;
+        soundToggle.innerHTML = soundIcons.muted;
+    }
+}
+soundToggle.addEventListener('click', toggleMusic);
+soundToggle.innerHTML = soundIcons.muted; // Estado inicial
 
 // --- LÓGICA DE AUTENTICACIÓN ---
 onAuthStateChanged(auth, async (user) => {
@@ -84,7 +122,7 @@ document.getElementById('create-game-btn').addEventListener('click', createGame)
 document.getElementById('join-game-btn').addEventListener('click', joinGame);
 document.getElementById('start-game-btn').addEventListener('click', startGame);
 document.getElementById('game-id-display').addEventListener('click', copyGameId);
-document.getElementById('exit-lobby-btn').addEventListener('click', executeLeave); // Salir del lobby no necesita confirmación
+document.getElementById('exit-lobby-btn').addEventListener('click', executeLeave);
 document.getElementById('leave-game-btn').addEventListener('click', confirmLeave);
 document.getElementById('confirm-leave-btn').addEventListener('click', executeLeave);
 document.getElementById('cancel-leave-btn').addEventListener('click', cancelLeave);
@@ -254,7 +292,6 @@ async function startGame() {
         alert("Solo el creador puede empezar.");
         return;
     }
-    // FIX 2: Mínimo de 2 jugadores
     if (Object.keys(gameData.players).length < 2) {
          alert("Se necesitan al menos 2 jugadores.");
         return;
@@ -345,15 +382,15 @@ function renderScores(gameData) {
 }
 
 function renderBoard(gameData) {
-    document.querySelectorAll('.player-marker').forEach(el => el.remove());
+    document.querySelectorAll('.player-marker, .temp-marker').forEach(el => el.remove());
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
 
-    const drawMarker = (guess, player) => {
+    const drawMarker = (guess, player, isTemp = false) => {
         const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
         if (cell && player) {
             const marker = document.createElement('div');
-            marker.className = 'player-marker';
+            marker.className = isTemp ? 'player-marker temp-marker' : 'player-marker';
             marker.style.backgroundColor = player.color;
             marker.textContent = player.name.substring(0, 1);
             cell.appendChild(marker);
@@ -373,6 +410,10 @@ function renderBoard(gameData) {
                 myGuesses.forEach(guess => drawMarker(guess, me));
             }
         }
+    }
+    
+    if (temporaryGuess) {
+        drawMarker(temporaryGuess, gameData.players[currentUserId], true);
     }
 
     if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
@@ -469,8 +510,12 @@ function renderControls(gameData) {
     } else { // If not the cue giver
         const myGuesses = gameData.guesses?.[currentUserId] || [];
         const canGuessNow = (gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1);
-        if (canGuessNow) {
-            controlsContainer.innerHTML = `<p class="text-gray-400">Haz click en el color que crees que es.</p>`;
+        
+        if (temporaryGuess) {
+            controlsContainer.innerHTML = `<button id="confirm-guess-btn" class="btn-primary">Confirmar Elección</button>`;
+            document.getElementById('confirm-guess-btn').onclick = confirmGuess;
+        } else if (canGuessNow) {
+            controlsContainer.innerHTML = `<p class="text-gray-400">Selecciona un color en el tablero.</p>`;
         } else {
             controlsContainer.innerHTML = `<p class="text-gray-400">Espera tu turno o la siguiente pista.</p>`;
         }
@@ -492,17 +537,16 @@ async function submitClue(clueNumber) {
     
     if (!firstWord) return;
 
-    // FIX 1: Check for forbidden words
     if (FORBIDDEN_WORDS.includes(firstWord)) {
         alert(`La palabra "${firstWord}" no está permitida. Por favor, elige una pista que no sea un color.`);
-        clueInput.value = ''; // Clear the input
+        clueInput.value = '';
         return;
     }
     
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameData = (await getDoc(gameRef)).data();
     await updateDoc(gameRef, {
-        clues: [...(gameData.clues || []), clueText.split(' ')[0]], // Use original casing for display
+        clues: [...(gameData.clues || []), clueText.split(' ')[0]],
         gameState: `guessing_${clueNumber}`
     });
 }
@@ -524,17 +568,33 @@ async function handleGridClick(e) {
     
     if (!canGuessNow) return;
 
-    const x = parseInt(cell.dataset.x);
-    const y = parseInt(cell.dataset.y);
-    
+    playSound("C4");
+    temporaryGuess = {
+        x: parseInt(cell.dataset.x),
+        y: parseInt(cell.dataset.y)
+    };
+    renderBoard(gameData); // Re-render to show temp marker
+    renderControls(gameData); // Re-render to show confirm button
+}
+
+async function confirmGuess() {
+    if (!temporaryGuess) return;
+    playSound("E4");
+
+    const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+    const gameSnap = await getDoc(gameRef);
+    const gameData = gameSnap.data();
+
+    const myGuesses = gameData.guesses?.[currentUserId] || [];
     const updatedGuesses = {
         ...gameData.guesses,
-        [currentUserId]: [...myGuesses, { x, y }]
+        [currentUserId]: [...myGuesses, temporaryGuess]
     };
-
-    await updateDoc(gameRef, { guesses: updatedGuesses });
     
-    const guessers = gameData.playerOrder.filter(id => id !== cueGiverId);
+    temporaryGuess = null;
+    await updateDoc(gameRef, { guesses: updatedGuesses });
+
+    const guessers = gameData.playerOrder.filter(id => id !== gameData.playerOrder[gameData.currentPlayerIndex]);
     const requiredGuesses = gameData.gameState === 'guessing_1' ? 1 : 2;
     const allHaveGuessed = guessers.every(id => (updatedGuesses[id]?.length || 0) >= requiredGuesses);
 
@@ -542,6 +602,7 @@ async function handleGridClick(e) {
         await updateDoc(gameRef, { gameState: 'giving_clue_2' });
     }
 }
+
 
 async function reveal() {
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
@@ -588,7 +649,6 @@ async function calculateAndShowScores() {
     
     await updateDoc(gameRef, { players: updatedPlayers });
     
-    // Check for game over
     const winner = Object.values(updatedPlayers).find(p => p.score >= gameData.gameSettings.scoreLimit);
     const roundLimitReached = gameData.currentRound >= gameData.gameSettings.roundLimit;
 
@@ -627,7 +687,7 @@ function showGameOver(gameData) {
     document.getElementById('winner-name').textContent = gameData.players[winner].name;
     gameOverModal.classList.remove('hidden');
     
-    // Confetti animation
+    playSound("C5");
     const canvas = document.getElementById('confetti-canvas');
     const myConfetti = confetti.create(canvas, { resize: true });
     myConfetti({
