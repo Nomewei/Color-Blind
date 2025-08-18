@@ -78,7 +78,14 @@ body {
     border: 2px solid #444;
 }
 
-/* Cuadrícula de colores */
+/* Contenedor de la cuadrícula para controlar el desbordamiento */
+#color-grid-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden; /* Esto mantiene las esquinas redondeadas */
+}
+
+/* Cuadrícula de colores (sin overflow) */
 .color-grid {
     display: grid;
     grid-template-columns: repeat(30, 1fr);
@@ -86,8 +93,6 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: auto;
-    border-radius: 8px;
-    overflow: hidden;
     border: 2px solid #444;
 }
 .color-cell {
@@ -141,6 +146,20 @@ body {
         inset 0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7),
         0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7);
 }
+
+/* Estilo para resaltar el color secreto para el Cue Giver */
+.secret-color-highlight {
+    outline: 3px dashed white;
+    outline-offset: -3px;
+    z-index: 5;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
 
 /* Animación de entrada */
 .fade-in {
@@ -227,6 +246,10 @@ body {
     .card {
         padding: 1.5rem;
     }
+    .card.order-1 { /* El card principal del juego */
+        position: relative;
+        padding-top: 6rem; /* Espacio para la pista fija */
+    }
     .color-grid {
         min-height: 250px;
     }
@@ -235,12 +258,10 @@ body {
         height: 1.5rem;
     }
     #clue-display {
-        position: sticky;
-        top: 1rem;
-        background-color: #1E1E1E;
+        position: absolute;
+        top: 1.5rem;
+        left: 1.5rem;
+        right: 1.5rem;
         z-index: 20;
-        padding: 0.5rem;
-        border-radius: 0.5rem;
-        margin-top: -1rem;
     }
 }
