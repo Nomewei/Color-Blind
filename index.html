@@ -44,6 +44,8 @@
                 <!-- Player list will be populated here -->
             </ul>
             <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
+            <!-- Botón para salir añadido -->
+            <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Salir de la Partida</button>
             <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
         </div>
 
@@ -78,9 +80,8 @@
                     </div>
                     <div id="color-grid-container" class="relative">
                         <div id="color-grid" class="color-grid"></div>
-                        <div id="scoring-box-3" class="scoring-overlay"></div>
-                        <div id="scoring-box-2" class="scoring-overlay"></div>
-                        <div id="scoring-box-1" class="scoring-overlay"></div>
+                        <!-- Contenedor para el marco de puntuación -->
+                        <div id="scoring-frame" class="scoring-frame hidden"></div>
                     </div>
                     <div id="controls" class="mt-4 text-center">
                         <!-- Controls will be populated here -->
