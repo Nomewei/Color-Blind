@@ -4,9 +4,6 @@ import { getFirestore, setLogLevel, doc, getDoc, setDoc, onSnapshot, updateDoc }
 import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
 // --- CONFIGURACIÓN DE FIREBASE ---
-//
-// ¡Configuración añadida desde tu proyecto!
-//
 const firebaseConfig = {
   apiKey: "AIzaSyAL1RF5XAMknDUlwtDRjC2PByUabkMCDOA",
   authDomain: "color-blind-bca19.firebaseapp.com",
@@ -20,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
-const APP_ID = 'hues-and-cues-online'; // Un identificador para tu juego en la base de datos
+const APP_ID = 'hues-and-cues-online';
 
 // --- VARIABLES GLOBALES ---
 let currentUserId = null;
@@ -42,7 +39,6 @@ onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserId = user.uid;
         console.log("Usuario autenticado:", currentUserId);
-        // Intenta volver a unirte a una partida si estabas en una
         const lastGame = JSON.parse(localStorage.getItem('hues-cues-game'));
         if (lastGame && lastGame.gameId) {
             rejoinGame(lastGame.gameId, lastGame.userId);
@@ -63,6 +59,15 @@ document.getElementById('create-game-btn').addEventListener('click', createGame)
 document.getElementById('join-game-btn').addEventListener('click', joinGame);
 document.getElementById('start-game-btn').addEventListener('click', startGame);
 document.getElementById('game-id-display').addEventListener('click', copyGameId);
+// FIX 1: Lógica para el botón de salir
+document.getElementById('exit-lobby-btn').addEventListener('click', () => {
+    if (unsubscribeGame) unsubscribeGame();
+    localStorage.removeItem('hues-cues-game');
+    currentGameId = null;
+    // Aquí podrías añadir lógica para eliminar al jugador de la partida en Firebase, pero por simplicidad lo dejamos así.
+    showScreen('lobby');
+});
+
 
 function getPlayerName() {
     const name = document.getElementById('player-name').value.trim();
@@ -75,22 +80,13 @@ function getPlayerName() {
 
 async function createGame() {
     const playerName = getPlayerName();
-    if (!playerName || !currentUserId) {
-        if(!currentUserId) alert("Aún no se ha conectado al servidor, espera un segundo.");
-        return;
-    };
+    if (!playerName || !currentUserId) return;
 
     const gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
     currentGameId = gameId;
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
 
-    const newPlayer = {
-        name: playerName,
-        color: playerColors[0],
-        score: 0,
-        isHost: true,
-    };
-
+    const newPlayer = { name, color: playerColors[0], score: 0, isHost: true };
     const gameData = {
         hostId: currentUserId,
         players: { [currentUserId]: newPlayer },
@@ -101,12 +97,12 @@ async function createGame() {
 
     try {
         await setDoc(gameRef, gameData);
-        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: currentUserId }));
+        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId, userId: currentUserId }));
         subscribeToGame(gameId);
         showScreen('waiting-room');
     } catch (error) {
         console.error("Error al crear la partida:", error);
-        document.getElementById('lobby-error').textContent = 'No se pudo crear la partida. Revisa la consola (F12) para ver los errores.';
+        document.getElementById('lobby-error').textContent = 'No se pudo crear la partida.';
     }
 }
 
@@ -116,7 +112,7 @@ async function joinGame() {
 
     const gameId = document.getElementById('join-game-id').value.trim().toUpperCase();
     if (!gameId) {
-        document.getElementById('lobby-error').textContent = 'Por favor, introduce un código de partida.';
+        document.getElementById('lobby-error').textContent = 'Introduce un código.';
         return;
     }
 
@@ -130,19 +126,15 @@ async function joinGame() {
 
     const gameData = gameSnap.data();
     
-    // FIX 1: Permitir volver a unirse si la partida ha comenzado
     if (gameData.gameState !== 'waiting') {
-        // Comprueba si algún jugador en la partida tiene el mismo nombre
         const playerEntry = Object.entries(gameData.players).find(([id, p]) => p.name === playerName);
         if (playerEntry) {
             const existingPlayerId = playerEntry[0];
-            console.log(`El jugador ${playerName} ya existe con ID ${existingPlayerId}, permitiendo que vuelva a unirse.`);
-            localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: existingPlayerId }));
-            currentUserId = existingPlayerId; // Asigna el ID correcto para la sesión
+            localStorage.setItem('hues-cues-game', JSON.stringify({ gameId, userId: existingPlayerId }));
             rejoinGame(gameId, existingPlayerId);
             return;
         } else {
-            document.getElementById('lobby-error').textContent = 'La partida ya ha comenzado y no eres un jugador existente.';
+            document.getElementById('lobby-error').textContent = 'La partida ya ha comenzado.';
             return;
         }
     }
@@ -153,24 +145,19 @@ async function joinGame() {
     }
 
     const newPlayerColor = playerColors[Object.keys(gameData.players).length];
-    const newPlayer = {
-        name: playerName,
-        color: newPlayerColor,
-        score: 0,
-        isHost: false,
-    };
+    const newPlayer = { name: playerName, color: newPlayerColor, score: 0, isHost: false };
     
     const updatedPlayers = { ...gameData.players, [currentUserId]: newPlayer };
     const updatedPlayerOrder = [...gameData.playerOrder, currentUserId];
 
     try {
         await updateDoc(gameRef, { players: updatedPlayers, playerOrder: updatedPlayerOrder });
-        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId: gameId, userId: currentUserId }));
+        localStorage.setItem('hues-cues-game', JSON.stringify({ gameId, userId: currentUserId }));
         currentGameId = gameId;
         subscribeToGame(gameId);
         showScreen('waiting-room');
     } catch (error) {
-        console.error("Error al unirse a la partida:", error);
+        console.error("Error al unirse:", error);
         document.getElementById('lobby-error').textContent = 'No se pudo unir a la partida.';
     }
 }
@@ -179,27 +166,21 @@ async function rejoinGame(gameId, userId) {
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
     const gameSnap = await getDoc(gameRef);
     if (gameSnap.exists()) {
-        console.log(`Reconectando a la partida ${gameId}`);
         currentGameId = gameId;
-        currentUserId = userId; // Asegúrate de que el ID de usuario es el correcto
+        currentUserId = userId;
         subscribeToGame(gameId);
     } else {
-        console.log("La partida a la que intentabas reconectarte ya no existe.");
         localStorage.removeItem('hues-cues-game');
     }
 }
-
 
 function subscribeToGame(gameId) {
     if (unsubscribeGame) unsubscribeGame();
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
     unsubscribeGame = onSnapshot(gameRef, (doc) => {
         if (doc.exists()) {
-            const gameData = doc.data();
-            console.log("Datos de la partida actualizados:", gameData);
-            updateUI(gameData);
+            updateUI(doc.data());
         } else {
-            console.log("La partida ha sido eliminada.");
             localStorage.removeItem('hues-cues-game');
             alert("La partida ya no existe.");
             showScreen('lobby');
@@ -224,9 +205,12 @@ function generateColorGrid() {
         for (let x = 0; x < GRID_COLS; x++) {
             const cell = document.createElement('div');
             cell.classList.add('color-cell');
-            const hue = (x / GRID_COLS) * 360;
-            const lightness = 90 - (y / GRID_ROWS) * 70;
-            const saturation = 100;
+            
+            // FIX 3: Fórmula de color mejorada
+            const hue = (x / GRID_COLS) * 340; // Rango de 0 a 340 para evitar rojos al final
+            const saturation = 40 + (y / GRID_ROWS) * 60; // Saturación aumenta hacia abajo
+            const lightness = 90 - (y / GRID_ROWS) * 60; // Rango de claridad de 90 a 30
+            
             cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
             cell.dataset.x = x;
             cell.dataset.y = y;
@@ -244,11 +228,11 @@ async function startGame() {
     const gameData = gameSnap.data();
 
     if (gameData.hostId !== currentUserId) {
-        alert("Solo el creador de la partida puede empezar.");
+        alert("Solo el creador puede empezar.");
         return;
     }
-    if (Object.keys(gameData.players).length < 2) { // Cambiado a 2 para pruebas, puedes volver a poner 3
-         alert("Se necesitan al menos 2 jugadores para empezar.");
+    if (Object.keys(gameData.players).length < 2) {
+         alert("Se necesitan al menos 2 jugadores.");
         return;
     }
     
@@ -266,9 +250,10 @@ async function startGame() {
 function pickRandomCard() {
     const x = Math.floor(Math.random() * GRID_COLS);
     const y = Math.floor(Math.random() * GRID_ROWS);
-    const hue = (x / GRID_COLS) * 360;
-    const lightness = 90 - (y / GRID_ROWS) * 70;
-    return { x, y, color: `hsl(${hue}, 100%, ${lightness}%)` };
+    const hue = (x / GRID_COLS) * 340;
+    const saturation = 40 + (y / GRID_ROWS) * 60;
+    const lightness = 90 - (y / GRID_ROWS) * 60;
+    return { x, y, color: `hsl(${hue}, ${saturation}%, ${lightness}%)` };
 }
 
 function updateUI(gameData) {
@@ -314,7 +299,8 @@ function renderScores(gameData) {
 
 function renderBoard(gameData) {
     document.querySelectorAll('.player-marker').forEach(el => el.remove());
-    document.querySelectorAll('.scoring-overlay').forEach(el => el.style.display = 'none');
+    const scoringFrame = document.getElementById('scoring-frame');
+    scoringFrame.classList.add('hidden');
 
     if (gameData.guesses) {
         Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
@@ -334,45 +320,36 @@ function renderBoard(gameData) {
 
     if (gameData.gameState === 'scoring') {
         const { x, y } = gameData.currentCard;
-        const cellWidth = colorGrid.querySelector('.color-cell').offsetWidth;
-        const cellHeight = colorGrid.querySelector('.color-cell').offsetHeight;
-        const gap = 2;
+        const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
+        if (!cell) return;
 
-        function drawScoringBox(size, id) {
-            const box = document.getElementById(id);
-            if (!box || !cellWidth) return;
-            box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
-            box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
-            box.style.width = `${size * (cellWidth + gap) - gap}px`;
-            box.style.height = `${size * (cellHeight + gap) - gap}px`;
-            box.style.display = 'block';
-        }
-        
-        drawScoringBox(1, 'scoring-box-3');
-        drawScoringBox(3, 'scoring-box-2');
-        drawScoringBox(5, 'scoring-box-1');
+        // FIX 2: Lógica de posicionamiento del marco de puntuación
+        const cellSize = cell.offsetWidth;
+        const gap = 1; // Coincide con el gap del CSS
+
+        scoringFrame.style.setProperty('--cell-size', `${cellSize + gap}px`);
+        scoringFrame.style.width = `${cellSize}px`;
+        scoringFrame.style.height = `${cellSize}px`;
+        scoringFrame.style.left = `${cell.offsetLeft}px`;
+        scoringFrame.style.top = `${cell.offsetTop}px`;
+        scoringFrame.classList.remove('hidden');
     }
 }
 
 function renderGameInfo(gameData) {
     const infoContainer = document.getElementById('game-info');
-    const clueDisplay = document.getElementById('clue-display');
-    const cueGiverView = document.getElementById('cue-giver-view');
-    
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
     const cueGiver = gameData.players[cueGiverId];
-    const isCueGiver = currentUserId === cueGiverId;
 
     let statusHTML = `<p><strong>Ronda:</strong> ${gameData.currentRound}</p>`;
     statusHTML += `<p><strong>Dador de pista:</strong> ${cueGiver.name}</p>`;
     
-    // FIX 2: Mostrar de quién es el turno de adivinar
     if (gameData.gameState.includes('guessing')) {
         const requiredGuesses = gameData.gameState === 'guessing_1' ? 1 : 2;
         const playersToGuess = gameData.playerOrder
-            .filter(pid => pid !== cueGiverId) // Todos excepto el que da la pista
-            .filter(pid => (gameData.guesses[pid]?.length || 0) < requiredGuesses) // Que no hayan adivinado aún
-            .map(pid => gameData.players[pid].name); // Obtener sus nombres
+            .filter(pid => pid !== cueGiverId)
+            .filter(pid => (gameData.guesses[pid]?.length || 0) < requiredGuesses)
+            .map(pid => gameData.players[pid].name);
 
         if (playersToGuess.length > 0) {
             statusHTML += `<p class="text-yellow-400 font-semibold">Turno de adivinar de:<br>${playersToGuess.join(', ')}</p>`;
@@ -386,10 +363,10 @@ function renderGameInfo(gameData) {
     }
 
     infoContainer.innerHTML = statusHTML;
-    
-    clueDisplay.innerHTML = (gameData.clues || []).map((clue) => `<span>${clue}</span>`).join('');
+    document.getElementById('clue-display').innerHTML = (gameData.clues || []).map((clue) => `<span>${clue}</span>`).join('');
 
-    if (isCueGiver && gameData.gameState !== 'scoring') {
+    const cueGiverView = document.getElementById('cue-giver-view');
+    if (currentUserId === cueGiverId && gameData.gameState !== 'scoring') {
         cueGiverView.classList.remove('hidden');
         document.getElementById('secret-color-display').style.backgroundColor = gameData.currentCard.color;
         document.getElementById('secret-color-coords').textContent = `${COORD_LETTERS[gameData.currentCard.x]}${gameData.currentCard.y + 1}`;
@@ -422,10 +399,8 @@ function renderControls(gameData) {
              }
         }
     } else {
-        if (gameData.gameState === 'guessing_1' && myGuesses.length === 0) {
+        if ((gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1)) {
             controlsContainer.innerHTML = `<p class="text-gray-400">Haz click en el color que crees que es.</p>`;
-        } else if (gameData.gameState === 'guessing_2' && myGuesses.length === 1) {
-            controlsContainer.innerHTML = `<p class="text-gray-400">Coloca tu segundo marcador.</p>`;
         }
     }
 }
@@ -470,13 +445,10 @@ async function handleGridClick(e) {
 
     const x = parseInt(cell.dataset.x);
     const y = parseInt(cell.dataset.y);
-    const newGuess = { x, y };
     
-    const currentGuesses = gameData.guesses || {};
-    const playerGuesses = currentGuesses[currentUserId] || [];
     const updatedGuesses = {
-        ...currentGuesses,
-        [currentUserId]: [...playerGuesses, newGuess]
+        ...gameData.guesses,
+        [currentUserId]: [...myGuesses, { x, y }]
     };
 
     await updateDoc(gameRef, { guesses: updatedGuesses });
