@@ -5,23 +5,15 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gsta
 
 // --- CONFIGURACIÓN DE FIREBASE ---
 //
-// ¡¡¡MUY IMPORTANTE!!!
-// DEBES REEMPLAZAR ESTO CON LA CONFIGURACIÓN DE TU PROPIO PROYECTO DE FIREBASE.
-// 1. Ve a https://console.firebase.google.com/
-// 2. Crea un nuevo proyecto (es gratis).
-// 3. Dentro de tu proyecto, ve a "Configuración del proyecto" (el ícono de engranaje ⚙️).
-// 4. En la pestaña "General", desplázate hacia abajo hasta "Tus apps".
-// 5. Haz clic en el ícono web "</>" para registrar una nueva app web.
-// 6. Dale un nombre a tu app (ej: "Juego Hues and Cues") y registra la app.
-// 7. Firebase te dará un objeto `firebaseConfig`. Cópialo y pégalo aquí abajo.
+// ¡Configuración añadida desde tu proyecto!
 //
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyAL1RF5XAMknDUlwtDRjC2PByUabkMCDOA",
+  authDomain: "color-blind-bca19.firebaseapp.com",
+  projectId: "color-blind-bca19",
+  storageBucket: "color-blind-bca19.firebasestorage.app",
+  messagingSenderId: "876142955211",
+  appId: "1:876142955211:web:e2e380a21e17d8e940694e"
 };
 
 // --- INICIALIZACIÓN DE FIREBASE (No cambiar) ---
