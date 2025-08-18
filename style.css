@@ -1,8 +1,8 @@
 /* Configuración base y tema oscuro */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #121212; /* Fondo negro/gris oscuro */
-    color: #E0E0E0; /* Texto principal claro */
+    background-color: #121212;
+    color: #E0E0E0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -13,10 +13,10 @@ body {
 
 /* Estilo para las "tarjetas" o contenedores principales */
 .card {
-    background-color: #1E1E1E; /* Un gris un poco más claro que el fondo */
+    background-color: #1E1E1E;
     padding: 2rem;
     border-radius: 0.75rem;
-    border: 1px solid #333; /* Borde sutil */
+    border: 1px solid #333;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
@@ -32,13 +32,13 @@ body {
 }
 .input-field:focus {
     outline: none;
-    border-color: #22d3ee; /* Cian brillante al enfocar */
+    border-color: #22d3ee;
     box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
 }
 
 /* Estilos de botones */
 .btn-primary {
-    background-color: #0891b2; /* Cian oscuro */
+    background-color: #0891b2;
     color: white;
     font-weight: bold;
     padding: 0.8rem 1rem;
@@ -48,11 +48,11 @@ body {
     cursor: pointer;
 }
 .btn-primary:hover {
-    background-color: #0e7490; /* Cian más oscuro al pasar el ratón */
+    background-color: #0e7490;
 }
 
 .btn-secondary {
-    background-color: #374151; /* Gris */
+    background-color: #374151;
     color: white;
     font-weight: bold;
     padding: 0.8rem 1rem;
@@ -65,11 +65,24 @@ body {
     background-color: #4b5563;
 }
 
+/* Paleta de colores decorativa */
+.color-palette {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+.palette-square {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    border: 2px solid #444;
+}
+
 /* Cuadrícula de colores */
 .color-grid {
     display: grid;
     grid-template-columns: repeat(30, 1fr);
-    gap: 1px; /* Reducido para pantallas pequeñas */
+    gap: 1px;
     width: 100%;
     max-width: 1200px;
     margin: auto;
@@ -116,17 +129,12 @@ body {
     position: absolute;
     pointer-events: none;
     box-sizing: border-box;
-    /* El borde de 3px representa la zona de 3 puntos */
     border: 3px solid white; 
     border-radius: 4px;
-    /* Las sombras simulan las zonas de 2 y 1 punto */
-    /* Sombra exterior: zona de 1 punto (5x5) */
-    /* Sombra interior: zona de 2 puntos (3x3) */
     box-shadow: 
-        inset 0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7), /* 2 Puntos */
-        0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7); /* 1 Punto */
+        inset 0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7),
+        0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7);
 }
-
 
 /* Animación de entrada */
 .fade-in {
@@ -147,12 +155,38 @@ body {
     color: #f0f9ff;
 }
 
+/* Estilos para los Modales */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 50;
+}
+
 /* Media Query para mejorar la vista en móviles */
-@media (max-width: 640px) {
+@media (max-width: 1023px) { /* lg breakpoint */
     .card {
         padding: 1.5rem;
     }
     .color-grid {
-        min-height: 250px; /* Asegura un tamaño mínimo para el tablero */
+        min-height: 250px;
+    }
+    .palette-square {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+    /* FIX 1: Pista fija en móvil */
+    #clue-display {
+        position: sticky;
+        top: 1rem;
+        background-color: #1E1E1E;
+        z-index: 20;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        margin-top: -1rem; /* Compensa el padding del card */
     }
 }
