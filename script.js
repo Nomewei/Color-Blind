@@ -493,6 +493,7 @@ function renderBoard(gameData) {
 
         function drawScoringBox(size, id) {
             const box = document.getElementById(id);
+            if (!box) return;
             box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
             box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
             box.style.width = `${size * (cellWidth + gap) - gap}px`;
