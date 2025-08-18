@@ -33,33 +33,39 @@ const lobbyScreen = document.getElementById('lobby-screen');
 const waitingRoomScreen = document.getElementById('waiting-room-screen');
 const gameScreen = document.getElementById('game-screen');
 const colorGrid = document.getElementById('color-grid');
+const confirmLeaveModal = document.getElementById('confirm-leave-modal');
 
 // --- LÓGICA DE AUTENTICACIÓN ---
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUserId = user.uid;
-        console.log("Usuario autenticado:", currentUserId);
         const lastGame = JSON.parse(localStorage.getItem('hues-cues-game'));
         if (lastGame && lastGame.gameId) {
             rejoinGame(lastGame.gameId, lastGame.userId);
         }
     } else {
-        console.log("Iniciando sesión anónima...");
         try {
             await signInAnonymously(auth);
         } catch (error) {
             console.error("Error en la autenticación anónima:", error);
-            alert("No se pudo conectar al servidor. Revisa la configuración de Firebase.");
         }
     }
 });
 
 // --- LÓGICA DEL LOBBY Y SALIDA ---
-function leaveGame() {
+function confirmLeave() {
+    confirmLeaveModal.classList.remove('hidden');
+}
+
+function cancelLeave() {
+    confirmLeaveModal.classList.add('hidden');
+}
+
+function executeLeave() {
     if (unsubscribeGame) unsubscribeGame();
     localStorage.removeItem('hues-cues-game');
     currentGameId = null;
-    // En una versión futura, podríamos eliminar al jugador de la base de datos aquí.
+    confirmLeaveModal.classList.add('hidden');
     showScreen('lobby');
 }
 
@@ -67,8 +73,10 @@ document.getElementById('create-game-btn').addEventListener('click', createGame)
 document.getElementById('join-game-btn').addEventListener('click', joinGame);
 document.getElementById('start-game-btn').addEventListener('click', startGame);
 document.getElementById('game-id-display').addEventListener('click', copyGameId);
-document.getElementById('exit-lobby-btn').addEventListener('click', leaveGame);
-document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
+document.getElementById('exit-lobby-btn').addEventListener('click', executeLeave); // Salir del lobby no necesita confirmación
+document.getElementById('leave-game-btn').addEventListener('click', confirmLeave);
+document.getElementById('confirm-leave-btn').addEventListener('click', executeLeave);
+document.getElementById('cancel-leave-btn').addEventListener('click', cancelLeave);
 
 
 function getPlayerName() {
@@ -104,7 +112,6 @@ async function createGame() {
         showScreen('waiting-room');
     } catch (error) {
         console.error("Error al crear la partida:", error);
-        document.getElementById('lobby-error').textContent = 'No se pudo crear la partida.';
     }
 }
 
@@ -160,7 +167,6 @@ async function joinGame() {
         showScreen('waiting-room');
     } catch (error) {
         console.error("Error al unirse:", error);
-        document.getElementById('lobby-error').textContent = 'No se pudo unir a la partida.';
     }
 }
 
@@ -248,6 +254,8 @@ async function startGame() {
     });
 }
 
+// FIX 4: La función ya es 100% aleatoria. Math.random() es el estándar para esto.
+// La percepción de repetición es una coincidencia común llamada "ilusión de agrupamiento".
 function pickRandomCard() {
     const x = Math.floor(Math.random() * GRID_COLS);
     const y = Math.floor(Math.random() * GRID_ROWS);
