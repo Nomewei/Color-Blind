@@ -34,6 +34,7 @@ const waitingRoomScreen = document.getElementById('waiting-room-screen');
 const gameScreen = document.getElementById('game-screen');
 const colorGrid = document.getElementById('color-grid');
 const confirmLeaveModal = document.getElementById('confirm-leave-modal');
+const gameOverModal = document.getElementById('game-over-modal');
 
 // --- LÓGICA DE AUTENTICACIÓN ---
 onAuthStateChanged(auth, async (user) => {
@@ -77,6 +78,7 @@ document.getElementById('exit-lobby-btn').addEventListener('click', executeLeave
 document.getElementById('leave-game-btn').addEventListener('click', confirmLeave);
 document.getElementById('confirm-leave-btn').addEventListener('click', executeLeave);
 document.getElementById('cancel-leave-btn').addEventListener('click', cancelLeave);
+document.getElementById('new-game-btn').addEventListener('click', restartGame);
 
 
 function getPlayerName() {
@@ -102,6 +104,10 @@ async function createGame() {
         players: { [currentUserId]: newPlayer },
         playerOrder: [currentUserId],
         gameState: 'waiting',
+        gameSettings: {
+            roundLimit: 10,
+            scoreLimit: 25,
+        },
         createdAt: new Date(),
     };
 
@@ -254,8 +260,6 @@ async function startGame() {
     });
 }
 
-// FIX 4: La función ya es 100% aleatoria. Math.random() es el estándar para esto.
-// La percepción de repetición es una coincidencia común llamada "ilusión de agrupamiento".
 function pickRandomCard() {
     const x = Math.floor(Math.random() * GRID_COLS);
     const y = Math.floor(Math.random() * GRID_ROWS);
@@ -278,8 +282,31 @@ function updateUI(gameData) {
             li.innerHTML = `<div class="w-4 h-4 rounded-full mr-2" style="background-color: ${player.color};"></div> ${player.name} ${player.isHost ? '(Host)' : ''}`;
             playerList.appendChild(li);
         });
-        document.getElementById('start-game-btn').style.display = gameData.hostId === currentUserId ? 'block' : 'none';
-    } else {
+
+        const isHost = gameData.hostId === currentUserId;
+        const gameOptions = document.getElementById('game-options');
+        const roundLimitInput = document.getElementById('round-limit');
+        const scoreLimitInput = document.getElementById('score-limit');
+        const limitsDisplay = document.getElementById('game-limits-display');
+
+        if (isHost) {
+            gameOptions.classList.remove('hidden');
+            limitsDisplay.classList.add('hidden');
+            roundLimitInput.disabled = false;
+            scoreLimitInput.disabled = false;
+            roundLimitInput.value = gameData.gameSettings.roundLimit;
+            scoreLimitInput.value = gameData.gameSettings.scoreLimit;
+        } else {
+            gameOptions.classList.add('hidden');
+            limitsDisplay.classList.remove('hidden');
+            limitsDisplay.textContent = `Jugar a ${gameData.gameSettings.roundLimit} rondas o ${gameData.gameSettings.scoreLimit} puntos.`;
+        }
+
+        document.getElementById('start-game-btn').style.display = isHost ? 'block' : 'none';
+    } else if (gameData.gameState === 'gameOver') {
+        showGameOver(gameData);
+    }
+    else {
         showScreen('game');
         renderScores(gameData);
         renderBoard(gameData);
@@ -323,7 +350,7 @@ function renderBoard(gameData) {
     };
 
     if (gameData.guesses) {
-        if (gameData.gameState === 'scoring') {
+        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
@@ -337,7 +364,7 @@ function renderBoard(gameData) {
         }
     }
 
-    if (gameData.gameState === 'scoring') {
+    if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
         const { x, y } = gameData.currentCard;
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
@@ -359,7 +386,7 @@ function renderGameInfo(gameData) {
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
     const cueGiver = gameData.players[cueGiverId];
 
-    let statusHTML = `<p><strong>Ronda:</strong> ${gameData.currentRound}</p>`;
+    let statusHTML = `<p><strong>Ronda:</strong> ${gameData.currentRound} / ${gameData.gameSettings.roundLimit}</p>`;
     statusHTML += `<p><strong>Dador de pista:</strong> ${cueGiver.name}</p>`;
     
     if (gameData.gameState.includes('guessing')) {
@@ -525,11 +552,19 @@ async function calculateAndShowScores() {
     
     await updateDoc(gameRef, { players: updatedPlayers });
     
-    const summaryContent = document.getElementById('summary-content');
-    summaryContent.innerHTML = Object.values(roundPoints).map(p => `
-        <p><strong>${p.name}:</strong> +${p.points} puntos</p>
-    `).join('');
-    document.getElementById('round-summary-modal').classList.remove('hidden');
+    // Check for game over
+    const winner = Object.values(updatedPlayers).find(p => p.score >= gameData.gameSettings.scoreLimit);
+    const roundLimitReached = gameData.currentRound >= gameData.gameSettings.roundLimit;
+
+    if (winner || roundLimitReached) {
+        await updateDoc(gameRef, { gameState: 'gameOver' });
+    } else {
+        const summaryContent = document.getElementById('summary-content');
+        summaryContent.innerHTML = Object.values(roundPoints).map(p => `
+            <p><strong>${p.name}:</strong> +${p.points} puntos</p>
+        `).join('');
+        document.getElementById('round-summary-modal').classList.remove('hidden');
+    }
 }
 
 document.getElementById('next-round-btn').addEventListener('click', async () => {
@@ -551,6 +586,46 @@ document.getElementById('next-round-btn').addEventListener('click', async () => 
     });
 });
 
+function showGameOver(gameData) {
+    const winner = gameData.playerOrder.reduce((a, b) => gameData.players[a].score > gameData.players[b].score ? a : b);
+    document.getElementById('winner-name').textContent = gameData.players[winner].name;
+    gameOverModal.classList.remove('hidden');
+    
+    // Confetti animation
+    const canvas = document.getElementById('confetti-canvas');
+    const myConfetti = confetti.create(canvas, { resize: true });
+    myConfetti({
+        particleCount: 200,
+        spread: 160,
+        origin: { y: 0.6 }
+    });
+}
+
+async function restartGame() {
+    if (!currentGameId) return;
+    const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+    const gameSnap = await getDoc(gameRef);
+    const gameData = gameSnap.data();
+
+    if(currentUserId !== gameData.hostId) {
+        alert("Solo el anfitrión puede reiniciar la partida.");
+        return;
+    }
+
+    const resetPlayers = {};
+    gameData.playerOrder.forEach(pid => {
+        resetPlayers[pid] = { ...gameData.players[pid], score: 0 };
+    });
+
+    await updateDoc(gameRef, {
+        players: resetPlayers,
+        gameState: 'waiting',
+    });
+    
+    gameOverModal.classList.add('hidden');
+}
+
+
 // --- UTILIDADES ---
 function showScreen(screenName) {
     lobbyScreen.classList.add('hidden');
@@ -562,3 +637,19 @@ function showScreen(screenName) {
 // --- INICIALIZACIÓN ---
 generateColorGrid();
 colorGrid.addEventListener('click', handleGridClick);
+
+// Host settings update
+document.getElementById('round-limit').addEventListener('change', (e) => updateGameSettings({ roundLimit: parseInt(e.target.value) }));
+document.getElementById('score-limit').addEventListener('change', (e) => updateGameSettings({ scoreLimit: parseInt(e.target.value) }));
+
+async function updateGameSettings(newSettings) {
+    if (!currentGameId) return;
+    const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+    const gameData = (await getDoc(gameRef)).data();
+    await updateDoc(gameRef, {
+        gameSettings: {
+            ...gameData.gameSettings,
+            ...newSettings
+        }
+    });
+}
