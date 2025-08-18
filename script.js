@@ -54,19 +54,21 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
-// --- LÓGICA DEL LOBBY ---
+// --- LÓGICA DEL LOBBY Y SALIDA ---
+function leaveGame() {
+    if (unsubscribeGame) unsubscribeGame();
+    localStorage.removeItem('hues-cues-game');
+    currentGameId = null;
+    // En una versión futura, podríamos eliminar al jugador de la base de datos aquí.
+    showScreen('lobby');
+}
+
 document.getElementById('create-game-btn').addEventListener('click', createGame);
 document.getElementById('join-game-btn').addEventListener('click', joinGame);
 document.getElementById('start-game-btn').addEventListener('click', startGame);
 document.getElementById('game-id-display').addEventListener('click', copyGameId);
-// FIX 1: Lógica para el botón de salir
-document.getElementById('exit-lobby-btn').addEventListener('click', () => {
-    if (unsubscribeGame) unsubscribeGame();
-    localStorage.removeItem('hues-cues-game');
-    currentGameId = null;
-    // Aquí podrías añadir lógica para eliminar al jugador de la partida en Firebase, pero por simplicidad lo dejamos así.
-    showScreen('lobby');
-});
+document.getElementById('exit-lobby-btn').addEventListener('click', leaveGame);
+document.getElementById('leave-game-btn').addEventListener('click', leaveGame);
 
 
 function getPlayerName() {
@@ -206,10 +208,9 @@ function generateColorGrid() {
             const cell = document.createElement('div');
             cell.classList.add('color-cell');
             
-            // FIX 3: Fórmula de color mejorada
-            const hue = (x / GRID_COLS) * 340; // Rango de 0 a 340 para evitar rojos al final
-            const saturation = 40 + (y / GRID_ROWS) * 60; // Saturación aumenta hacia abajo
-            const lightness = 90 - (y / GRID_ROWS) * 60; // Rango de claridad de 90 a 30
+            const hue = (x / GRID_COLS) * 340;
+            const saturation = 40 + (y / GRID_ROWS) * 60;
+            const lightness = 90 - (y / GRID_ROWS) * 60;
             
             cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
             cell.dataset.x = x;
@@ -302,7 +303,6 @@ function renderBoard(gameData) {
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
 
-    // Helper function to draw a single marker
     const drawMarker = (guess, player) => {
         const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
         if (cell && player) {
@@ -315,14 +315,12 @@ function renderBoard(gameData) {
     };
 
     if (gameData.guesses) {
-        // FIX 4: Ocultar elecciones de otros jugadores
-        // Durante la fase de puntuación, se muestran todos los marcadores
         if (gameData.gameState === 'scoring') {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
             });
-        } else { // Durante las fases de adivinanza, solo se muestran tus propios marcadores
+        } else {
             const myGuesses = gameData.guesses[currentUserId] || [];
             const me = gameData.players[currentUserId];
             if (me) {
@@ -336,9 +334,8 @@ function renderBoard(gameData) {
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
 
-        // FIX 2: Lógica de posicionamiento del marco de puntuación
         const cellSize = cell.offsetWidth;
-        const gap = 1; // Coincide con el gap del CSS
+        const gap = 1;
 
         scoringFrame.style.setProperty('--cell-size', `${cellSize + gap}px`);
         scoringFrame.style.width = `${cellSize}px`;
