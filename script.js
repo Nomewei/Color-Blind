@@ -86,7 +86,7 @@ async function createGame() {
     currentGameId = gameId;
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
 
-    const newPlayer = { name, color: playerColors[0], score: 0, isHost: true };
+    const newPlayer = { name: playerName, color: playerColors[0], score: 0, isHost: true };
     const gameData = {
         hostId: currentUserId,
         players: { [currentUserId]: newPlayer },
@@ -302,20 +302,33 @@ function renderBoard(gameData) {
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
 
+    // Helper function to draw a single marker
+    const drawMarker = (guess, player) => {
+        const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
+        if (cell && player) {
+            const marker = document.createElement('div');
+            marker.className = 'player-marker';
+            marker.style.backgroundColor = player.color;
+            marker.textContent = player.name.substring(0, 1);
+            cell.appendChild(marker);
+        }
+    };
+
     if (gameData.guesses) {
-        Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
-            guesses.forEach(guess => {
-                const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
-                if (cell) {
-                    const player = gameData.players[playerId];
-                    const marker = document.createElement('div');
-                    marker.className = 'player-marker';
-                    marker.style.backgroundColor = player.color;
-                    marker.textContent = player.name.substring(0, 1);
-                    cell.appendChild(marker);
-                }
+        // FIX 4: Ocultar elecciones de otros jugadores
+        // Durante la fase de puntuación, se muestran todos los marcadores
+        if (gameData.gameState === 'scoring') {
+            Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
+                const player = gameData.players[playerId];
+                guesses.forEach(guess => drawMarker(guess, player));
             });
-        });
+        } else { // Durante las fases de adivinanza, solo se muestran tus propios marcadores
+            const myGuesses = gameData.guesses[currentUserId] || [];
+            const me = gameData.players[currentUserId];
+            if (me) {
+                myGuesses.forEach(guess => drawMarker(guess, me));
+            }
+        }
     }
 
     if (gameData.gameState === 'scoring') {
