@@ -78,14 +78,13 @@ body {
     border: 2px solid #444;
 }
 
-/* Contenedor de la cuadrícula para controlar el desbordamiento */
+/* Contenedor de la cuadrícula */
 #color-grid-container {
     position: relative;
-    border-radius: 8px;
-    overflow: hidden; /* Esto mantiene las esquinas redondeadas */
+    /* overflow: hidden; <- ELIMINADO PARA ARREGLAR EL ZOOM */
 }
 
-/* Cuadrícula de colores (sin overflow) */
+/* Cuadrícula de colores */
 .color-grid {
     display: grid;
     grid-template-columns: repeat(30, 1fr);
@@ -93,6 +92,8 @@ body {
     width: 100%;
     max-width: 1200px;
     margin: auto;
+    border-radius: 8px;
+    overflow: hidden; /* Se mantiene aquí para las esquinas de la cuadrícula */
     border: 2px solid #444;
 }
 .color-cell {
@@ -135,17 +136,18 @@ body {
     opacity: 0.8;
 }
 
-/* Marco de puntuación rediseñado */
-.scoring-frame {
+/* Marco de puntuación */
+.scoring-overlay {
     position: absolute;
     pointer-events: none;
     box-sizing: border-box;
-    border: 3px solid white; 
+    border-style: dashed;
     border-radius: 4px;
-    box-shadow: 
-        inset 0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7),
-        0 0 0 var(--cell-size) rgba(240, 240, 240, 0.7);
 }
+#scoring-box-3 { border: 3px dashed white; }
+#scoring-box-2 { border: 3px dashed #facc15; }
+#scoring-box-1 { border: 3px dashed #ef4444; }
+
 
 /* Estilo para resaltar el color secreto para el Cue Giver */
 .secret-color-highlight {
