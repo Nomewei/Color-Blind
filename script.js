@@ -437,26 +437,42 @@ function renderControls(gameData) {
     
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
     const isCueGiver = currentUserId === cueGiverId;
-    const myGuesses = gameData.guesses?.[currentUserId] || [];
-
+    
     if (isCueGiver) {
-        if (gameData.gameState === 'giving_clue_1' && (gameData.clues || []).length === 0) {
-            controlsContainer.innerHTML = createClueInputHTML(1);
-            document.getElementById('submit-clue-btn').onclick = () => submitClue(1);
-        } else if (gameData.gameState === 'giving_clue_2' && (gameData.clues || []).length === 1) {
-            controlsContainer.innerHTML = createClueInputHTML(2);
-            document.getElementById('submit-clue-btn').onclick = () => submitClue(2);
-        } else if (gameData.gameState === 'guessing_2') {
-             const guessers = gameData.playerOrder.filter(id => id !== cueGiverId);
-             const allHaveGuessed = guessers.every(id => (gameData.guesses[id]?.length || 0) >= 2);
-             if(allHaveGuessed){
-                controlsContainer.innerHTML = `<button id="reveal-btn" class="btn-primary" style="background-color: #ef4444;">Revelar Color</button>`;
-                document.getElementById('reveal-btn').onclick = reveal;
-             }
+        switch (gameData.gameState) {
+            case 'giving_clue_1':
+                if ((gameData.clues || []).length === 0) {
+                    controlsContainer.innerHTML = createClueInputHTML(1);
+                    document.getElementById('submit-clue-btn').onclick = () => submitClue(1);
+                }
+                break;
+            case 'giving_clue_2':
+                if ((gameData.clues || []).length === 1) {
+                    controlsContainer.innerHTML = createClueInputHTML(2);
+                    document.getElementById('submit-clue-btn').onclick = () => submitClue(2);
+                }
+                break;
+            case 'guessing_1':
+            case 'guessing_2':
+                const guessers = gameData.playerOrder.filter(id => id !== cueGiverId);
+                const requiredGuesses = gameData.gameState === 'guessing_1' ? 1 : 2;
+                const allHaveGuessed = guessers.every(id => (gameData.guesses[id]?.length || 0) >= requiredGuesses);
+                
+                if (allHaveGuessed) {
+                    controlsContainer.innerHTML = `<button id="reveal-btn" class="btn-primary" style="background-color: #ef4444;">Revelar Color</button>`;
+                    document.getElementById('reveal-btn').onclick = reveal;
+                } else {
+                    controlsContainer.innerHTML = `<p class="text-gray-400">Esperando que los demás adivinen...</p>`;
+                }
+                break;
         }
-    } else {
-        if ((gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1)) {
+    } else { // If not the cue giver
+        const myGuesses = gameData.guesses?.[currentUserId] || [];
+        const canGuessNow = (gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1);
+        if (canGuessNow) {
             controlsContainer.innerHTML = `<p class="text-gray-400">Haz click en el color que crees que es.</p>`;
+        } else {
+            controlsContainer.innerHTML = `<p class="text-gray-400">Espera tu turno o la siguiente pista.</p>`;
         }
     }
 }
