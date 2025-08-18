@@ -114,10 +114,9 @@ function cancelLeave() {
 async function executeLeave() {
     if (unsubscribeGame) unsubscribeGame();
     
-    // FIX 2: Si el host abandona, la partida termina para todos.
     if (currentUserId === currentHostId && currentGameId) {
         const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
-        await deleteDoc(gameRef); // Esto hará que todos los jugadores salgan por el onSnapshot
+        await deleteDoc(gameRef);
     }
 
     localStorage.removeItem('hues-cues-game');
@@ -251,7 +250,7 @@ function subscribeToGame(gameId) {
     unsubscribeGame = onSnapshot(gameRef, (doc) => {
         if (doc.exists()) {
             const gameData = doc.data();
-            currentHostId = gameData.hostId; // Mantener actualizado el ID del host
+            currentHostId = gameData.hostId;
             updateUI(gameData);
         } else {
             localStorage.removeItem('hues-cues-game');
@@ -330,7 +329,7 @@ function pickRandomCard() {
 
 function updateUI(gameData) {
     if (gameData.gameState === 'waiting') {
-        gameOverModal.classList.add('hidden'); // Ocultar modal de ganador si está visible
+        gameOverModal.classList.add('hidden');
         showScreen('waiting-room');
         document.getElementById('game-id-display').textContent = currentGameId;
         const playerList = document.getElementById('player-list');
@@ -412,13 +411,12 @@ function renderBoard(gameData) {
     };
 
     if (gameData.guesses) {
-        // FIX 1: El Cue Giver ve todas las fichas
         if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || isCueGiver) {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
             });
-        } else { // Los demás jugadores solo ven sus propias fichas
+        } else {
             const myGuesses = gameData.guesses[currentUserId] || [];
             const me = gameData.players[currentUserId];
             if (me) {
