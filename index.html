@@ -6,114 +6,54 @@
     <title>Hues and Cues Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            touch-action: manipulation;
-        }
-        .color-grid {
-            display: grid;
-            grid-template-columns: repeat(30, 1fr);
-            gap: 2px;
-            width: 100%;
-            max-width: 1200px;
-            margin: auto;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        .color-cell {
-            width: 100%;
-            padding-bottom: 100%; /* Aspect ratio 1:1 */
-            position: relative;
-            cursor: pointer;
-            transition: transform 0.1s ease-in-out;
-        }
-        .color-cell:hover {
-            transform: scale(1.2);
-            z-index: 10;
-        }
-        .player-marker {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 70%;
-            height: 70%;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            color: white;
-            text-shadow: 1px 1px 2px black;
-        }
-        .scoring-overlay {
-            position: absolute;
-            border-style: solid;
-            pointer-events: none;
-        }
-        #scoring-box-3 { border: 3px dashed white; }
-        #scoring-box-2 { border: 3px dashed yellow; }
-        #scoring-box-1 { border: 3px dashed red; }
-
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
-    </style>
+    <!-- Enlace a tu nueva hoja de estilos -->
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+<body>
 
     <div id="app-container" class="w-full max-w-7xl mx-auto">
 
         <!-- Lobby Screen -->
-        <div id="lobby-screen" class="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto text-center fade-in">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Hues & Cues</h1>
-            <p class="text-gray-500 mb-6">La versión online del juego de adivinar colores.</p>
+        <div id="lobby-screen" class="card text-center fade-in">
+            <h1 class="text-4xl font-bold text-cyan-300 mb-2">Hues & Cues</h1>
+            <p class="text-gray-400 mb-6">El juego de adivinar colores online.</p>
             
             <div class="mb-4">
-                <label for="player-name" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
-                <input type="text" id="player-name" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" placeholder="Ej: Ana">
+                <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu Nombre</label>
+                <input type="text" id="player-name" class="input-field" placeholder="Ej: Ana">
             </div>
 
-            <button id="create-game-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-md hover:bg-indigo-700 transition duration-300 mb-3">Crear Nueva Partida</button>
+            <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
             
             <div class="flex items-center space-x-2">
-                <input type="text" id="join-game-id" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-green-500 focus:border-green-500" placeholder="Código de la partida">
-                <button id="join-game-btn" class="bg-green-600 text-white font-bold py-3 px-4 rounded-md hover:bg-green-700 transition duration-300">Unirse</button>
+                <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida">
+                <button id="join-game-btn" class="btn-secondary">Unirse</button>
             </div>
-            <p id="lobby-error" class="text-red-500 mt-4 h-4"></p>
+            <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
         </div>
 
         <!-- Waiting Room Screen -->
-        <div id="waiting-room-screen" class="hidden bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto text-center fade-in">
+        <div id="waiting-room-screen" class="hidden card text-center fade-in">
             <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
-            <p class="text-gray-600 mb-2">Comparte este código con tus amigos:</p>
-            <div class="bg-gray-200 p-3 rounded-md mb-4">
-                <p id="game-id-display" class="text-2xl font-mono font-bold tracking-widest cursor-pointer" title="Click para copiar"></p>
+            <p class="text-gray-400 mb-2">Comparte este código con tus amigos:</p>
+            <div class="bg-gray-800 p-3 rounded-md mb-4 border border-gray-600">
+                <p id="game-id-display" class="text-2xl font-mono font-bold tracking-widest cursor-pointer text-cyan-300" title="Click para copiar"></p>
             </div>
             <h3 class="font-semibold mb-2">Jugadores Conectados:</h3>
             <ul id="player-list" class="text-left space-y-2 mb-6">
                 <!-- Player list will be populated here -->
             </ul>
-            <button id="start-game-btn" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Empezar Partida</button>
+            <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
             <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
         </div>
 
 
         <!-- Game Screen -->
         <div id="game-screen" class="hidden w-full fade-in">
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <!-- Left Panel: Game Info & Players -->
-                <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg flex flex-col">
-                    <h2 class="text-2xl font-bold mb-4 border-b pb-2">Partida</h2>
+                <div class="lg:col-span-1 card flex flex-col">
+                    <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
                     <div id="game-info" class="mb-4 space-y-3">
                         <!-- Game status will be populated here -->
                     </div>
@@ -126,20 +66,20 @@
                 </div>
 
                 <!-- Main Panel: Color Grid -->
-                <div class="lg:col-span-3 bg-white p-6 rounded-xl shadow-lg">
-                    <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+                <div class="lg:col-span-3 card">
+                    <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
                         <p>Tu color secreto es:</p>
-                        <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-300"></div>
-                        <p id="secret-color-coords" class="font-mono font-bold"></p>
+                        <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
+                        <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
                     </div>
-                    <div id="clue-display" class="text-center mb-4 h-12">
+                    <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4">
                         <!-- Clues will be shown here -->
                     </div>
                     <div id="color-grid-container" class="relative">
                         <div id="color-grid" class="color-grid"></div>
-                        <div id="scoring-box-3" class="scoring-overlay hidden"></div>
-                        <div id="scoring-box-2" class="scoring-overlay hidden"></div>
-                        <div id="scoring-box-1" class="scoring-overlay hidden"></div>
+                        <div id="scoring-box-3" class="scoring-overlay"></div>
+                        <div id="scoring-box-2" class="scoring-overlay"></div>
+                        <div id="scoring-box-1" class="scoring-overlay"></div>
                     </div>
                     <div id="controls" class="mt-4 text-center">
                         <!-- Controls will be populated here -->
@@ -149,539 +89,17 @@
         </div>
         
         <!-- Round Summary Modal -->
-        <div id="round-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div class="bg-white rounded-xl shadow-lg p-8 max-w-lg w-full text-center fade-in">
-                <h2 class="text-3xl font-bold mb-4" id="summary-title">Fin de la Ronda</h2>
+        <div id="round-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="card max-w-lg w-full text-center fade-in">
+                <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
                 <div id="summary-content" class="space-y-2 mb-6"></div>
-                <button id="next-round-btn" class="bg-indigo-600 text-white font-bold py-3 px-4 rounded-md hover:bg-indigo-700 transition duration-300">Siguiente Ronda</button>
+                <button id="next-round-btn" class="btn-primary">Siguiente Ronda</button>
             </div>
         </div>
 
     </div>
 
-    <script type="module">
-        // Importa las funciones necesarias de Firebase SDK
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, setLogLevel, doc, getDoc, setDoc, onSnapshot, updateDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // --- CONFIGURACIÓN DE FIREBASE ---
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "...", projectId: "..." };
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'hues-cues-default';
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        setLogLevel('debug');
-
-        // --- VARIABLES GLOBALES ---
-        let currentUserId = null;
-        let currentGameId = null;
-        let unsubscribeGame = null;
-        const playerColors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#3182CE', '#5A67D8', '#805AD5', '#D53F8C', '#718096', '#4A5568'];
-        const GRID_COLS = 30;
-        const GRID_ROWS = 20;
-        const COORD_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').concat(["AA", "AB", "AC", "AD"]);
-
-        // --- ELEMENTOS DEL DOM ---
-        const lobbyScreen = document.getElementById('lobby-screen');
-        const waitingRoomScreen = document.getElementById('waiting-room-screen');
-        const gameScreen = document.getElementById('game-screen');
-        const colorGrid = document.getElementById('color-grid');
-        
-        // --- LÓGICA DE AUTENTICACIÓN ---
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                console.log("Usuario autenticado:", currentUserId);
-            } else {
-                console.log("Usuario no autenticado, iniciando sesión anónimamente.");
-                try {
-                    if (typeof __initial_auth_token !== 'undefined') {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                } catch (error) {
-                    console.error("Error en la autenticación anónima:", error);
-                }
-            }
-        });
-
-        // --- LÓGICA DEL LOBBY ---
-        document.getElementById('create-game-btn').addEventListener('click', createGame);
-        document.getElementById('join-game-btn').addEventListener('click', joinGame);
-        document.getElementById('start-game-btn').addEventListener('click', startGame);
-        document.getElementById('game-id-display').addEventListener('click', copyGameId);
-
-        function getPlayerName() {
-            const name = document.getElementById('player-name').value.trim();
-            if (!name) {
-                document.getElementById('lobby-error').textContent = 'Por favor, introduce tu nombre.';
-                return null;
-            }
-            return name;
-        }
-        
-        async function createGame() {
-            const playerName = getPlayerName();
-            if (!playerName || !currentUserId) return;
-
-            const gameId = Math.random().toString(36).substring(2, 7).toUpperCase();
-            currentGameId = gameId;
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-
-            const newPlayer = {
-                name: playerName,
-                color: playerColors[0],
-                score: 0,
-                isHost: true,
-            };
-
-            const gameData = {
-                hostId: currentUserId,
-                players: { [currentUserId]: newPlayer },
-                playerOrder: [currentUserId],
-                gameState: 'waiting',
-                gridCols: GRID_COLS,
-                gridRows: GRID_ROWS,
-                createdAt: new Date(),
-            };
-
-            try {
-                await setDoc(gameRef, gameData);
-                subscribeToGame(gameId);
-                showScreen('waiting-room');
-            } catch (error) {
-                console.error("Error al crear la partida:", error);
-                document.getElementById('lobby-error').textContent = 'No se pudo crear la partida.';
-            }
-        }
-
-        async function joinGame() {
-            const playerName = getPlayerName();
-            if (!playerName || !currentUserId) return;
-
-            const gameId = document.getElementById('join-game-id').value.trim().toUpperCase();
-            if (!gameId) {
-                document.getElementById('lobby-error').textContent = 'Por favor, introduce un código de partida.';
-                return;
-            }
-
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-            const gameSnap = await getDoc(gameRef);
-
-            if (!gameSnap.exists()) {
-                document.getElementById('lobby-error').textContent = 'Partida no encontrada.';
-                return;
-            }
-
-            const gameData = gameSnap.data();
-            if (Object.keys(gameData.players).length >= 10) {
-                document.getElementById('lobby-error').textContent = 'La partida está llena.';
-                return;
-            }
-             if (gameData.gameState !== 'waiting') {
-                document.getElementById('lobby-error').textContent = 'La partida ya ha comenzado.';
-                return;
-            }
-
-            const newPlayerColor = playerColors[Object.keys(gameData.players).length];
-            const newPlayer = {
-                name: playerName,
-                color: newPlayerColor,
-                score: 0,
-                isHost: false,
-            };
-            
-            const updatedPlayers = { ...gameData.players, [currentUserId]: newPlayer };
-            const updatedPlayerOrder = [...gameData.playerOrder, currentUserId];
-
-            try {
-                await updateDoc(gameRef, { players: updatedPlayers, playerOrder: updatedPlayerOrder });
-                currentGameId = gameId;
-                subscribeToGame(gameId);
-                showScreen('waiting-room');
-            } catch (error) {
-                console.error("Error al unirse a la partida:", error);
-                document.getElementById('lobby-error').textContent = 'No se pudo unir a la partida.';
-            }
-        }
-
-        function subscribeToGame(gameId) {
-            if (unsubscribeGame) unsubscribeGame();
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, gameId);
-            unsubscribeGame = onSnapshot(gameRef, (doc) => {
-                if (doc.exists()) {
-                    const gameData = doc.data();
-                    console.log("Datos de la partida actualizados:", gameData);
-                    updateUI(gameData);
-                } else {
-                    console.log("La partida ha sido eliminada.");
-                    alert("La partida ya no existe.");
-                    showScreen('lobby');
-                }
-            });
-        }
-        
-        function copyGameId() {
-            const gameId = document.getElementById('game-id-display').textContent;
-            navigator.clipboard.writeText(gameId).then(() => {
-                alert(`Código "${gameId}" copiado al portapapeles.`);
-            });
-        }
-
-        // --- LÓGICA DEL JUEGO ---
-        function generateColorGrid() {
-            colorGrid.innerHTML = '';
-            for (let y = 0; y < GRID_ROWS; y++) {
-                for (let x = 0; x < GRID_COLS; x++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('color-cell');
-                    const hue = (x / GRID_COLS) * 360;
-                    const lightness = 90 - (y / GRID_ROWS) * 70;
-                    const saturation = 100;
-                    cell.style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                    cell.dataset.x = x;
-                    cell.dataset.y = y;
-                    cell.dataset.coords = `${COORD_LETTERS[x]}${y + 1}`;
-                    cell.title = `${COORD_LETTERS[x]}${y + 1}`;
-                    colorGrid.appendChild(cell);
-                }
-            }
-        }
-        
-        async function startGame() {
-            if (!currentGameId) return;
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            const gameData = gameSnap.data();
-
-            if (gameData.hostId !== currentUserId) {
-                alert("Solo el creador de la partida puede empezar.");
-                return;
-            }
-            if (Object.keys(gameData.players).length < 3) {
-                 alert("Se necesitan al menos 3 jugadores para empezar.");
-                return;
-            }
-            
-            const newCard = pickRandomCard();
-            await updateDoc(gameRef, {
-                gameState: 'giving_clue_1',
-                currentRound: 1,
-                currentPlayerIndex: 0,
-                currentCard: newCard,
-                clues: [],
-                guesses: {},
-            });
-        }
-        
-        function pickRandomCard() {
-            const x = Math.floor(Math.random() * GRID_COLS);
-            const y = Math.floor(Math.random() * GRID_ROWS);
-            const hue = (x / GRID_COLS) * 360;
-            const lightness = 90 - (y / GRID_ROWS) * 70;
-            return { x, y, color: `hsl(${hue}, 100%, ${lightness}%)` };
-        }
-
-        function updateUI(gameData) {
-            if (gameData.gameState === 'waiting') {
-                showScreen('waiting-room');
-                document.getElementById('game-id-display').textContent = currentGameId;
-                const playerList = document.getElementById('player-list');
-                playerList.innerHTML = '';
-                gameData.playerOrder.forEach(pid => {
-                    const player = gameData.players[pid];
-                    const li = document.createElement('li');
-                    li.className = 'flex items-center';
-                    li.innerHTML = `<div class="w-4 h-4 rounded-full mr-2" style="background-color: ${player.color};"></div> ${player.name} ${player.isHost ? '(Host)' : ''}`;
-                    playerList.appendChild(li);
-                });
-                document.getElementById('start-game-btn').style.display = gameData.hostId === currentUserId ? 'block' : 'none';
-            } else {
-                showScreen('game');
-                renderScores(gameData);
-                renderBoard(gameData);
-                renderGameInfo(gameData);
-                renderControls(gameData);
-            }
-        }
-
-        function renderScores(gameData) {
-            const scoresContainer = document.getElementById('player-scores');
-            scoresContainer.innerHTML = '';
-            gameData.playerOrder.forEach(pid => {
-                const player = gameData.players[pid];
-                const scoreEl = document.createElement('div');
-                scoreEl.className = 'flex justify-between items-center p-2 rounded-md';
-                scoreEl.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-5 h-5 rounded-full mr-3" style="background-color: ${player.color};"></div>
-                        <span class="font-medium">${player.name}</span>
-                    </div>
-                    <span class="font-bold text-lg">${player.score}</span>
-                `;
-                scoresContainer.appendChild(scoreEl);
-            });
-        }
-        
-        function renderBoard(gameData) {
-            // Limpia marcadores y overlays anteriores
-            document.querySelectorAll('.player-marker, .scoring-overlay').forEach(el => {
-                if(el.id.startsWith('scoring-box')) {
-                    el.classList.add('hidden');
-                } else {
-                    el.remove();
-                }
-            });
-
-            // Dibuja los marcadores de las adivinanzas
-            if (gameData.guesses) {
-                Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
-                    guesses.forEach(guess => {
-                        const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
-                        if (cell) {
-                            const player = gameData.players[playerId];
-                            const marker = document.createElement('div');
-                            marker.className = 'player-marker';
-                            marker.style.backgroundColor = player.color;
-                            marker.textContent = player.name.substring(0, 1);
-                            cell.appendChild(marker);
-                        }
-                    });
-                });
-            }
-
-            // Muestra el resultado al final de la ronda
-            if (gameData.gameState === 'scoring') {
-                const { x, y } = gameData.currentCard;
-                const cellWidth = colorGrid.querySelector('.color-cell').offsetWidth;
-                const cellHeight = colorGrid.querySelector('.color-cell').offsetHeight;
-                const gap = 2;
-
-                // Dibuja los cuadros de puntuación
-                function drawScoringBox(size, id) {
-                    const box = document.getElementById(id);
-                    box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
-                    box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
-                    box.style.width = `${size * (cellWidth + gap) - gap}px`;
-                    box.style.height = `${size * (cellHeight + gap) - gap}px`;
-                    box.classList.remove('hidden');
-                }
-                
-                drawScoringBox(1, 'scoring-box-3'); // 3 puntos
-                drawScoringBox(3, 'scoring-box-2'); // 2 puntos
-                drawScoringBox(5, 'scoring-box-1'); // 1 punto
-            }
-        }
-        
-        function renderGameInfo(gameData) {
-            const infoContainer = document.getElementById('game-info');
-            const clueDisplay = document.getElementById('clue-display');
-            const cueGiverView = document.getElementById('cue-giver-view');
-            
-            const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
-            const cueGiver = gameData.players[cueGiverId];
-            const isCueGiver = currentUserId === cueGiverId;
-
-            let statusHTML = `<p><strong>Ronda:</strong> ${gameData.currentRound}</p>`;
-            statusHTML += `<p><strong>Turno de dar pista:</strong> ${cueGiver.name}</p>`;
-            
-            if (gameData.gameState.includes('giving_clue')) {
-                statusHTML += `<p class="text-indigo-600 font-semibold">Esperando pista...</p>`;
-            } else if (gameData.gameState.includes('guessing')) {
-                statusHTML += `<p class="text-green-600 font-semibold">¡Adivinando!</p>`;
-            } else if (gameData.gameState === 'scoring') {
-                statusHTML += `<p class="text-blue-600 font-semibold">Puntuando...</p>`;
-            }
-            infoContainer.innerHTML = statusHTML;
-            
-            clueDisplay.innerHTML = gameData.clues.map((clue, i) => `<span class="text-2xl font-bold bg-gray-200 px-4 py-2 rounded-md mx-2">${i+1}: ${clue}</span>`).join('');
-
-            if (isCueGiver && gameData.gameState !== 'scoring') {
-                cueGiverView.classList.remove('hidden');
-                document.getElementById('secret-color-display').style.backgroundColor = gameData.currentCard.color;
-                document.getElementById('secret-color-coords').textContent = `${COORD_LETTERS[gameData.currentCard.x]}${gameData.currentCard.y + 1}`;
-            } else {
-                cueGiverView.classList.add('hidden');
-            }
-        }
-
-        function renderControls(gameData) {
-            const controlsContainer = document.getElementById('controls');
-            controlsContainer.innerHTML = '';
-            
-            const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
-            const isCueGiver = currentUserId === cueGiverId;
-            const myGuesses = gameData.guesses?.[currentUserId] || [];
-
-            if (isCueGiver) {
-                if (gameData.gameState === 'giving_clue_1' && gameData.clues.length === 0) {
-                    controlsContainer.innerHTML = createClueInputHTML(1);
-                    document.getElementById('submit-clue-btn').onclick = () => submitClue(1);
-                } else if (gameData.gameState === 'giving_clue_2' && gameData.clues.length === 1) {
-                    controlsContainer.innerHTML = createClueInputHTML(2);
-                    document.getElementById('submit-clue-btn').onclick = () => submitClue(2);
-                } else if (gameData.gameState === 'guessing_2') {
-                    controlsContainer.innerHTML = `<button id="reveal-btn" class="bg-red-600 text-white font-bold py-2 px-6 rounded-md hover:bg-red-700">Revelar Color</button>`;
-                    document.getElementById('reveal-btn').onclick = reveal;
-                }
-            } else {
-                if (gameData.gameState === 'guessing_1' && myGuesses.length === 0) {
-                    controlsContainer.innerHTML = `<p class="text-gray-600">Haz click en el color que crees que es.</p>`;
-                } else if (gameData.gameState === 'guessing_2' && myGuesses.length === 1) {
-                    controlsContainer.innerHTML = `<p class="text-gray-600">Coloca tu segundo marcador.</p>`;
-                }
-            }
-        }
-
-        function createClueInputHTML(clueNumber) {
-            return `
-                <div class="flex justify-center items-center space-x-2">
-                    <input type="text" id="clue-input" class="px-4 py-2 border border-gray-300 rounded-md" placeholder="Pista de 1 palabra">
-                    <button id="submit-clue-btn" class="bg-indigo-600 text-white font-bold py-2 px-6 rounded-md hover:bg-indigo-700">Dar Pista ${clueNumber}</button>
-                </div>`;
-        }
-        
-        async function submitClue(clueNumber) {
-            const clueInput = document.getElementById('clue-input');
-            const clue = clueInput.value.trim().split(' ')[0]; // Solo la primera palabra
-            if (!clue) return;
-            
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            await updateDoc(gameRef, {
-                clues: [...(await getDoc(gameRef)).data().clues, clue],
-                gameState: `guessing_${clueNumber}`
-            });
-        }
-        
-        async function handleGridClick(e) {
-            if (!e.target.classList.contains('color-cell')) return;
-            
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            const gameData = gameSnap.data();
-
-            const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
-            if (currentUserId === cueGiverId) return; // El Cue Giver no puede adivinar
-
-            const myGuesses = gameData.guesses?.[currentUserId] || [];
-            const canGuessNow = (gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1);
-            
-            if (!canGuessNow) return;
-
-            const x = parseInt(e.target.dataset.x);
-            const y = parseInt(e.target.dataset.y);
-            const newGuess = { x, y };
-            
-            const currentGuesses = gameData.guesses || {};
-            const playerGuesses = currentGuesses[currentUserId] || [];
-            const updatedGuesses = {
-                ...currentGuesses,
-                [currentUserId]: [...playerGuesses, newGuess]
-            };
-
-            await updateDoc(gameRef, { guesses: updatedGuesses });
-            
-            // Si todos han adivinado, pasar a la siguiente fase
-            const guessers = gameData.playerOrder.filter(id => id !== cueGiverId);
-            const requiredGuesses = gameData.gameState === 'guessing_1' ? 1 : 2;
-            const allHaveGuessed = guessers.every(id => (updatedGuesses[id]?.length || 0) === requiredGuesses);
-
-            if (allHaveGuessed) {
-                if (gameData.gameState === 'guessing_1') {
-                    await updateDoc(gameRef, { gameState: 'giving_clue_2' });
-                }
-            }
-        }
-        
-        async function reveal() {
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            await updateDoc(gameRef, { gameState: 'scoring' });
-            
-            // Esperar un momento para que se vea el resultado y luego calcular puntos
-            setTimeout(calculateAndShowScores, 4000);
-        }
-
-        async function calculateAndShowScores() {
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            const gameData = gameSnap.data();
-
-            const { x: targetX, y: targetY } = gameData.currentCard;
-            const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
-            let cueGiverPoints = 0;
-            const roundPoints = {};
-            const updatedPlayers = JSON.parse(JSON.stringify(gameData.players));
-
-            Object.keys(updatedPlayers).forEach(pid => roundPoints[pid] = { name: updatedPlayers[pid].name, points: 0 });
-
-            Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
-                let playerRoundPoints = 0;
-                guesses.forEach(guess => {
-                    const distX = Math.abs(guess.x - targetX);
-                    const distY = Math.abs(guess.y - targetY);
-                    
-                    let points = 0;
-                    if (distX === 0 && distY === 0) points = 3;
-                    else if (distX <= 1 && distY <= 1) points = 2;
-                    else if (distX <= 2 && distY <= 2) points = 1;
-                    
-                    playerRoundPoints += points;
-
-                    if (playerId !== cueGiverId && distX <= 1 && distY <= 1) {
-                        cueGiverPoints++;
-                    }
-                });
-                updatedPlayers[playerId].score += playerRoundPoints;
-                roundPoints[playerId].points = playerRoundPoints;
-            });
-            
-            updatedPlayers[cueGiverId].score += cueGiverPoints;
-            roundPoints[cueGiverId].points = cueGiverPoints;
-            
-            await updateDoc(gameRef, { players: updatedPlayers });
-            
-            // Mostrar modal de resumen
-            const summaryContent = document.getElementById('summary-content');
-            summaryContent.innerHTML = Object.values(roundPoints).map(p => `
-                <p><strong>${p.name}:</strong> +${p.points} puntos</p>
-            `).join('');
-            document.getElementById('round-summary-modal').classList.remove('hidden');
-        }
-
-        document.getElementById('next-round-btn').addEventListener('click', async () => {
-            document.getElementById('round-summary-modal').classList.add('hidden');
-            const gameRef = doc(db, `artifacts/${appId}/public/data/games`, currentGameId);
-            const gameSnap = await getDoc(gameRef);
-            const gameData = gameSnap.data();
-
-            const nextPlayerIndex = (gameData.currentPlayerIndex + 1) % gameData.playerOrder.length;
-            const nextRound = nextPlayerIndex === 0 ? gameData.currentRound + 1 : gameData.currentRound;
-
-            await updateDoc(gameRef, {
-                gameState: 'giving_clue_1',
-                currentRound: nextRound,
-                currentPlayerIndex: nextPlayerIndex,
-                currentCard: pickRandomCard(),
-                clues: [],
-                guesses: {},
-            });
-        });
-
-        // --- UTILIDADES ---
-        function showScreen(screenName) {
-            lobbyScreen.classList.add('hidden');
-            waitingRoomScreen.classList.add('hidden');
-            gameScreen.classList.add('hidden');
-            document.getElementById(`${screenName}-screen`).classList.remove('hidden');
-        }
-
-        // --- INICIALIZACIÓN ---
-        generateColorGrid();
-        colorGrid.addEventListener('click', handleGridClick);
-
-    </script>
+    <!-- Enlace a tu nuevo archivo JavaScript -->
+    <script src="script.js" type="module"></script>
 </body>
 </html>
