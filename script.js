@@ -393,6 +393,15 @@ function updateUI(gameData) {
     else {
         roundSummaryModal.classList.add('hidden');
         showScreen('game');
+        
+        const gameTitle = document.getElementById('game-title');
+        const playerNames = gameData.playerOrder.map(pid => gameData.players[pid].name);
+        if (playerNames.length === 2) {
+            gameTitle.textContent = `${playerNames[0]} vs ${playerNames[1]}`;
+        } else {
+            gameTitle.textContent = 'Partida Grupal';
+        }
+
         renderScores(gameData);
         renderBoard(gameData);
         renderGameInfo(gameData);
