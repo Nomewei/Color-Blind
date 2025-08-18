@@ -51,16 +51,32 @@ const soundToggle = document.getElementById('sound-toggle');
 // --- LÓGICA DE AUDIO ---
 let isMuted = true;
 let music;
-const synth = new Tone.Synth().toDestination();
+const synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "sine" },
+    envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 1 },
+}).toDestination();
+synth.volume.value = -12;
 
 const soundIcons = {
     muted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`,
     unmuted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`
 };
 
-function playSound(note = "C4") {
+function playSound(type) {
     if (!isMuted) {
-        synth.triggerAttackRelease(note, "8n");
+        const now = Tone.now();
+        switch (type) {
+            case 'select':
+                synth.triggerAttackRelease("C5", "16n", now);
+                break;
+            case 'confirm':
+                synth.triggerAttackRelease("E5", "16n", now);
+                synth.triggerAttackRelease("G5", "16n", now + 0.1);
+                break;
+            case 'win':
+                synth.triggerAttackRelease("C6", "8n", now);
+                break;
+        }
     }
 }
 
@@ -68,10 +84,13 @@ function toggleMusic() {
     if (isMuted) {
         Tone.start();
         if (!music) {
+            const notes = ["C4", "E4", "G4", "B4"];
+            let index = 0;
             music = new Tone.Loop(time => {
-                synth.triggerAttackRelease("C2", "2n", time);
-                synth.triggerAttackRelease("G2", "2n", time + Tone.Time("2n").toSeconds());
-            }, "1m").start(0);
+                let note = notes[index % notes.length];
+                synth.triggerAttackRelease(note, "8n", time);
+                index++;
+            }, "4n").start(0);
         }
         Tone.Transport.start();
         isMuted = false;
@@ -83,7 +102,7 @@ function toggleMusic() {
     }
 }
 soundToggle.addEventListener('click', toggleMusic);
-soundToggle.innerHTML = soundIcons.muted; // Estado inicial
+soundToggle.innerHTML = soundIcons.muted;
 
 // --- LÓGICA DE AUTENTICACIÓN ---
 onAuthStateChanged(auth, async (user) => {
@@ -525,7 +544,12 @@ function renderControls(gameData) {
         const canGuessNow = (gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1);
         
         if (temporaryGuess) {
-            controlsContainer.innerHTML = `<button id="confirm-guess-btn" class="btn-primary">Confirmar Elección</button>`;
+            const tempColor = colorGrid.querySelector(`[data-x='${temporaryGuess.x}'][data-y='${temporaryGuess.y}']`).style.backgroundColor;
+            controlsContainer.innerHTML = `
+                <div class="flex items-center justify-center gap-4">
+                    <div class="color-preview" style="background-color: ${tempColor};"></div>
+                    <button id="confirm-guess-btn" class="btn-primary">Confirmar Elección</button>
+                </div>`;
             document.getElementById('confirm-guess-btn').onclick = confirmGuess;
         } else if (canGuessNow) {
             controlsContainer.innerHTML = `<p class="text-gray-400">Selecciona un color en el tablero.</p>`;
@@ -581,7 +605,7 @@ async function handleGridClick(e) {
     
     if (!canGuessNow) return;
 
-    playSound("C4");
+    playSound("select");
     temporaryGuess = {
         x: parseInt(cell.dataset.x),
         y: parseInt(cell.dataset.y)
@@ -592,7 +616,7 @@ async function handleGridClick(e) {
 
 async function confirmGuess() {
     if (!temporaryGuess) return;
-    playSound("E4");
+    playSound("confirm");
 
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameSnap = await getDoc(gameRef);
@@ -700,7 +724,7 @@ function showGameOver(gameData) {
     document.getElementById('winner-name').textContent = gameData.players[winner].name;
     gameOverModal.classList.remove('hidden');
     
-    playSound("C5");
+    playSound("win");
     const canvas = document.getElementById('confetti-canvas');
     const myConfetti = confetti.create(canvas, { resize: true });
     myConfetti({
