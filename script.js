@@ -46,6 +46,7 @@ const gameScreen = document.getElementById('game-screen');
 const colorGrid = document.getElementById('color-grid');
 const confirmLeaveModal = document.getElementById('confirm-leave-modal');
 const gameOverModal = document.getElementById('game-over-modal');
+const roundSummaryModal = document.getElementById('round-summary-modal');
 const soundToggle = document.getElementById('sound-toggle');
 
 // --- LÓGICA DE AUDIO ---
@@ -53,9 +54,12 @@ let isMuted = true;
 let music;
 const synth = new Tone.PolySynth(Tone.Synth, {
     oscillator: { type: "sine" },
-    envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 1 },
+    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.8 },
 }).toDestination();
-synth.volume.value = -12;
+synth.volume.value = -22; // Volumen de la música más bajo
+
+const actionSynth = new Tone.Synth().toDestination();
+actionSynth.volume.value = -10; // Volumen de efectos más alto
 
 const soundIcons = {
     muted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`,
@@ -67,14 +71,14 @@ function playSound(type) {
         const now = Tone.now();
         switch (type) {
             case 'select':
-                synth.triggerAttackRelease("C5", "16n", now);
+                actionSynth.triggerAttackRelease("C5", "16n", now);
                 break;
             case 'confirm':
-                synth.triggerAttackRelease("E5", "16n", now);
-                synth.triggerAttackRelease("G5", "16n", now + 0.1);
+                actionSynth.triggerAttackRelease("E5", "16n", now);
+                actionSynth.triggerAttackRelease("A5", "16n", now + 0.1);
                 break;
             case 'win':
-                synth.triggerAttackRelease("C6", "8n", now);
+                actionSynth.triggerAttackRelease("C6", "8n", now);
                 break;
         }
     }
@@ -84,13 +88,13 @@ function toggleMusic() {
     if (isMuted) {
         Tone.start();
         if (!music) {
-            const notes = ["C4", "E4", "G4", "B4"];
+            const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
             let index = 0;
             music = new Tone.Loop(time => {
                 let note = notes[index % notes.length];
                 synth.triggerAttackRelease(note, "8n", time);
                 index++;
-            }, "4n").start(0);
+            }, "8n").start(0);
         }
         Tone.Transport.start();
         isMuted = false;
@@ -383,8 +387,11 @@ function updateUI(gameData) {
         document.getElementById('start-game-btn').style.display = isHost ? 'block' : 'none';
     } else if (gameData.gameState === 'gameOver') {
         showGameOver(gameData);
+    } else if (gameData.gameState === 'roundSummary') {
+        showRoundSummary(gameData);
     }
     else {
+        roundSummaryModal.classList.add('hidden');
         showScreen('game');
         renderScores(gameData);
         renderBoard(gameData);
@@ -430,7 +437,7 @@ function renderBoard(gameData) {
     };
 
     if (gameData.guesses) {
-        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || isCueGiver) {
+        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || gameData.gameState === 'roundSummary' || isCueGiver) {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
@@ -448,7 +455,7 @@ function renderBoard(gameData) {
         drawMarker(temporaryGuess, gameData.players[currentUserId], true);
     }
 
-    if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
+    if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || gameData.gameState === 'roundSummary') {
         const { x, y } = gameData.currentCard;
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
@@ -610,8 +617,8 @@ async function handleGridClick(e) {
         x: parseInt(cell.dataset.x),
         y: parseInt(cell.dataset.y)
     };
-    renderBoard(gameData); // Re-render to show temp marker
-    renderControls(gameData); // Re-render to show confirm button
+    renderBoard(gameData);
+    renderControls(gameData);
 }
 
 async function confirmGuess() {
@@ -684,7 +691,7 @@ async function calculateAndShowScores() {
     updatedPlayers[cueGiverId].score += cueGiverPoints;
     roundPoints[cueGiverId].points = cueGiverPoints;
     
-    await updateDoc(gameRef, { players: updatedPlayers });
+    await updateDoc(gameRef, { players: updatedPlayers, lastRoundSummary: roundPoints });
     
     const winner = Object.values(updatedPlayers).find(p => p.score >= gameData.gameSettings.scoreLimit);
     const roundLimitReached = gameData.currentRound >= gameData.gameSettings.roundLimit;
@@ -692,16 +699,21 @@ async function calculateAndShowScores() {
     if (winner || roundLimitReached) {
         await updateDoc(gameRef, { gameState: 'gameOver' });
     } else {
-        const summaryContent = document.getElementById('summary-content');
-        summaryContent.innerHTML = Object.values(roundPoints).map(p => `
-            <p><strong>${p.name}:</strong> +${p.points} puntos</p>
-        `).join('');
-        document.getElementById('round-summary-modal').classList.remove('hidden');
+        await updateDoc(gameRef, { gameState: 'roundSummary' });
     }
 }
 
+function showRoundSummary(gameData) {
+    const summaryContent = document.getElementById('summary-content');
+    const summaryTitle = document.getElementById('summary-title');
+    summaryTitle.textContent = `Fin de la Ronda ${gameData.currentRound} / ${gameData.gameSettings.roundLimit}`;
+    summaryContent.innerHTML = Object.values(gameData.lastRoundSummary).map(p => `
+        <p><strong>${p.name}:</strong> +${p.points} puntos</p>
+    `).join('');
+    roundSummaryModal.classList.remove('hidden');
+}
+
 document.getElementById('next-round-btn').addEventListener('click', async () => {
-    document.getElementById('round-summary-modal').classList.add('hidden');
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameSnap = await getDoc(gameRef);
     const gameData = gameSnap.data();
