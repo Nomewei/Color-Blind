@@ -6,12 +6,18 @@
     <title>Color Blind Online</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Enlace a tu nueva hoja de estilos -->
     <link rel="stylesheet" href="style.css">
     <!-- Librería para el confeti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Librería para el audio -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
 <body>
+
+    <!-- Icono de Sonido -->
+    <div id="sound-toggle" class="sound-toggle">
+        <!-- El SVG del icono se cargará con JS -->
+    </div>
 
     <div id="app-container" class="w-full max-w-7xl mx-auto">
 
@@ -53,7 +59,6 @@
             <h3 class="font-semibold mb-2">Jugadores Conectados:</h3>
             <ul id="player-list" class="text-left space-y-2 mb-6"></ul>
             
-            <!-- Opciones de Partida (Solo para el Host) -->
             <div id="game-options" class="mb-6 space-y-4 text-left">
                 <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
                 <div class="flex items-center justify-between">
