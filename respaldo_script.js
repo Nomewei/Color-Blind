@@ -52,14 +52,17 @@ const soundToggle = document.getElementById('sound-toggle');
 // --- LÓGICA DE AUDIO ---
 let isMuted = true;
 let music;
-const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: "sine" },
-    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.8 },
+const musicSynth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "triangle" },
+    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 },
 }).toDestination();
-synth.volume.value = -22; // Volumen de la música más bajo
+musicSynth.volume.value = -24;
 
-const actionSynth = new Tone.Synth().toDestination();
-actionSynth.volume.value = -10; // Volumen de efectos más alto
+const actionSynth = new Tone.Synth({
+    oscillator: { type: "sine" },
+    envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 },
+}).toDestination();
+actionSynth.volume.value = -10;
 
 const soundIcons = {
     muted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`,
@@ -70,16 +73,13 @@ function playSound(type) {
     if (!isMuted) {
         const now = Tone.now();
         switch (type) {
-            case 'select':
-                actionSynth.triggerAttackRelease("C5", "16n", now);
-                break;
-            case 'confirm':
-                actionSynth.triggerAttackRelease("E5", "16n", now);
-                actionSynth.triggerAttackRelease("A5", "16n", now + 0.1);
-                break;
-            case 'win':
-                actionSynth.triggerAttackRelease("C6", "8n", now);
-                break;
+            case 'click': actionSynth.triggerAttackRelease("C4", "16n", now); break;
+            case 'select': actionSynth.triggerAttackRelease("C5", "16n", now); break;
+            case 'confirm': actionSynth.triggerAttackRelease("G5", "16n", now); break;
+            case 'start': actionSynth.triggerAttackRelease("C4", "8n", now); actionSynth.triggerAttackRelease("G4", "8n", now + 0.1); actionSynth.triggerAttackRelease("C5", "8n", now + 0.2); break;
+            case 'win': actionSynth.triggerAttackRelease("G5", "8n", now); actionSynth.triggerAttackRelease("C6", "8n", now + 0.1); break;
+            case 'success': actionSynth.triggerAttackRelease("C5", "16n", now); actionSynth.triggerAttackRelease("E5", "16n", now + 0.1); actionSynth.triggerAttackRelease("G5", "16n", now + 0.2); break;
+            case 'failure': actionSynth.triggerAttackRelease("A3", "8n", now); break;
         }
     }
 }
@@ -88,11 +88,11 @@ function toggleMusic() {
     if (isMuted) {
         Tone.start();
         if (!music) {
-            const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
+            const notes = ["C4", "E4", "G4", "B4", "C5", "B4", "G4", "E4"];
             let index = 0;
             music = new Tone.Loop(time => {
                 let note = notes[index % notes.length];
-                synth.triggerAttackRelease(note, "8n", time);
+                musicSynth.triggerAttackRelease(note, "8n", time);
                 index++;
             }, "8n").start(0);
         }
@@ -127,14 +127,17 @@ onAuthStateChanged(auth, async (user) => {
 
 // --- LÓGICA DEL LOBBY Y SALIDA ---
 function confirmLeave() {
+    playSound('click');
     confirmLeaveModal.classList.remove('hidden');
 }
 
 function cancelLeave() {
+    playSound('click');
     confirmLeaveModal.classList.add('hidden');
 }
 
 async function executeLeave() {
+    playSound('click');
     if (unsubscribeGame) unsubscribeGame();
     
     if (currentUserId === currentHostId && currentGameId) {
@@ -149,15 +152,15 @@ async function executeLeave() {
     showScreen('lobby');
 }
 
-document.getElementById('create-game-btn').addEventListener('click', createGame);
-document.getElementById('join-game-btn').addEventListener('click', joinGame);
-document.getElementById('start-game-btn').addEventListener('click', startGame);
+document.getElementById('create-game-btn').addEventListener('click', () => { playSound('click'); createGame(); });
+document.getElementById('join-game-btn').addEventListener('click', () => { playSound('click'); joinGame(); });
+document.getElementById('start-game-btn').addEventListener('click', () => { playSound('start'); startGame(); });
 document.getElementById('game-id-display').addEventListener('click', copyGameId);
 document.getElementById('exit-lobby-btn').addEventListener('click', executeLeave);
 document.getElementById('leave-game-btn').addEventListener('click', confirmLeave);
 document.getElementById('confirm-leave-btn').addEventListener('click', executeLeave);
 document.getElementById('cancel-leave-btn').addEventListener('click', cancelLeave);
-document.getElementById('new-game-btn').addEventListener('click', restartGame);
+document.getElementById('new-game-btn').addEventListener('click', () => { playSound('start'); restartGame(); });
 
 
 function getPlayerName() {
@@ -284,6 +287,7 @@ function subscribeToGame(gameId) {
 }
 
 function copyGameId() {
+    playSound('click');
     const gameId = document.getElementById('game-id-display').textContent;
     navigator.clipboard.writeText(gameId).then(() => {
         const display = document.getElementById('game-id-display');
@@ -436,8 +440,7 @@ function renderBoard(gameData) {
         }
     });
     
-    const scoringFrame = document.getElementById('scoring-frame');
-    scoringFrame.classList.add('hidden');
+    document.querySelectorAll('.scoring-overlay').forEach(el => el.classList.add('hidden'));
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
     const isCueGiver = currentUserId === cueGiverId;
 
@@ -484,15 +487,23 @@ function renderBoard(gameData) {
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
 
-        const cellSize = cell.offsetWidth;
+        const cellWidth = cell.offsetWidth;
+        const cellHeight = cell.offsetHeight;
         const gap = 1;
 
-        scoringFrame.style.setProperty('--cell-size', `${cellSize + gap}px`);
-        scoringFrame.style.width = `${cellSize}px`;
-        scoringFrame.style.height = `${cellSize}px`;
-        scoringFrame.style.left = `${cell.offsetLeft}px`;
-        scoringFrame.style.top = `${cell.offsetTop}px`;
-        scoringFrame.classList.remove('hidden');
+        function drawScoringBox(size, id) {
+            const box = document.getElementById(id);
+            if (!box) return;
+            box.style.left = `${(x - Math.floor(size / 2)) * (cellWidth + gap)}px`;
+            box.style.top = `${(y - Math.floor(size / 2)) * (cellHeight + gap)}px`;
+            box.style.width = `${size * (cellWidth + gap) - gap}px`;
+            box.style.height = `${size * (cellHeight + gap) - gap}px`;
+            box.classList.remove('hidden');
+        }
+        
+        drawScoringBox(1, 'scoring-box-3');
+        drawScoringBox(3, 'scoring-box-2');
+        drawScoringBox(5, 'scoring-box-1');
     }
 }
 
@@ -591,11 +602,19 @@ function renderControls(gameData) {
 }
 
 function createClueInputHTML(clueNumber) {
-    return `
-        <div class="flex justify-center items-center space-x-2">
-            <input type="text" id="clue-input" class="input-field" placeholder="Pista de 1 palabra">
-            <button id="submit-clue-btn" class="btn-primary">Dar Pista ${clueNumber}</button>
-        </div>`;
+    const container = document.createElement('div');
+    container.className = 'flex justify-center items-center space-x-2';
+    container.innerHTML = `
+        <input type="text" id="clue-input" class="input-field" placeholder="Pista de 1 palabra">
+        <button id="submit-clue-btn" class="btn-primary">Dar Pista ${clueNumber}</button>
+    `;
+    container.querySelector('#clue-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            submitClue(clueNumber);
+        }
+    });
+    return container.innerHTML;
 }
 
 async function submitClue(clueNumber) {
@@ -675,7 +694,7 @@ async function confirmGuess() {
 async function reveal() {
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     await updateDoc(gameRef, { gameState: 'scoring' });
-    setTimeout(calculateAndShowScores, 4000);
+    setTimeout(calculateAndShowScores, 2500); // Reducido el tiempo de espera
 }
 
 async function calculateAndShowScores() {
@@ -731,6 +750,14 @@ function showRoundSummary(gameData) {
     const summaryContent = document.getElementById('summary-content');
     const summaryTitle = document.getElementById('summary-title');
     summaryTitle.textContent = `Fin de la Ronda ${gameData.currentRound} / ${gameData.gameSettings.roundLimit}`;
+    
+    const totalPoints = Object.values(gameData.lastRoundSummary).reduce((sum, p) => sum + p.points, 0);
+    if (totalPoints > 0) {
+        playSound('success');
+    } else {
+        playSound('failure');
+    }
+
     summaryContent.innerHTML = Object.values(gameData.lastRoundSummary).map(p => `
         <p><strong>${p.name}:</strong> +${p.points} puntos</p>
     `).join('');
@@ -738,6 +765,7 @@ function showRoundSummary(gameData) {
 }
 
 document.getElementById('next-round-btn').addEventListener('click', async () => {
+    playSound('click');
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameSnap = await getDoc(gameRef);
     const gameData = gameSnap.data();
