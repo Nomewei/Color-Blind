@@ -27,6 +27,16 @@ const playerColors = ['#E53E3E', '#DD6B20', '#D69E2E', '#38A169', '#3182CE', '#5
 const GRID_COLS = 30;
 const GRID_ROWS = 20;
 const COORD_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('').concat(["AA", "AB", "AC", "AD"]);
+// FIX 1: Lista de palabras prohibidas relacionadas con colores
+const FORBIDDEN_WORDS = [
+    'rojo', 'verde', 'azul', 'amarillo', 'naranja', 'morado', 'violeta', 'rosa', 'marrón',
+    'negro', 'blanco', 'gris', 'cian', 'magenta', 'turquesa', 'lila', 'fucsia', 'celeste',
+    'índigo', 'añil', 'purpura', 'escarlata', 'carmín', 'granate', 'oliva', 'esmeralda',
+    'zafiro', 'cobalto', 'ocre', 'siena', 'beis', 'beige', 'crema', 'dorado', 'plateado',
+    'bronce', 'cobre', 'color', 'tono', 'matiz', 'claro', 'oscuro', 'brillante', 'pálido',
+    'aguamarina', 'coral', 'lavanda', 'malva', 'salmón', 'terracota', 'caqui'
+];
+
 
 // --- ELEMENTOS DEL DOM ---
 const lobbyScreen = document.getElementById('lobby-screen');
@@ -244,6 +254,7 @@ async function startGame() {
         alert("Solo el creador puede empezar.");
         return;
     }
+    // FIX 2: Mínimo de 2 jugadores
     if (Object.keys(gameData.players).length < 2) {
          alert("Se necesitan al menos 2 jugadores.");
         return;
@@ -460,13 +471,22 @@ function createClueInputHTML(clueNumber) {
 
 async function submitClue(clueNumber) {
     const clueInput = document.getElementById('clue-input');
-    const clue = clueInput.value.trim().split(' ')[0];
-    if (!clue) return;
+    const clueText = clueInput.value.trim();
+    const firstWord = clueText.toLowerCase().split(' ')[0];
+    
+    if (!firstWord) return;
+
+    // FIX 1: Check for forbidden words
+    if (FORBIDDEN_WORDS.includes(firstWord)) {
+        alert(`La palabra "${firstWord}" no está permitida. Por favor, elige una pista que no sea un color.`);
+        clueInput.value = ''; // Clear the input
+        return;
+    }
     
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameData = (await getDoc(gameRef)).data();
     await updateDoc(gameRef, {
-        clues: [...(gameData.clues || []), clue],
+        clues: [...(gameData.clues || []), clueText.split(' ')[0]], // Use original casing for display
         gameState: `guessing_${clueNumber}`
     });
 }
