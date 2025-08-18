@@ -428,7 +428,14 @@ function renderScores(gameData) {
 }
 
 function renderBoard(gameData) {
-    document.querySelectorAll('.player-marker, .temp-marker').forEach(el => el.remove());
+    document.querySelectorAll('.player-marker, .temp-marker, .secret-color-highlight').forEach(el => {
+        if (el.classList.contains('secret-color-highlight')) {
+            el.classList.remove('secret-color-highlight');
+        } else {
+            el.remove();
+        }
+    });
+    
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
@@ -444,6 +451,14 @@ function renderBoard(gameData) {
             cell.appendChild(marker);
         }
     };
+
+    if (isCueGiver && gameData.gameState !== 'scoring' && gameData.gameState !== 'gameOver' && gameData.gameState !== 'roundSummary') {
+        const { x, y } = gameData.currentCard;
+        const secretCell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
+        if (secretCell) {
+            secretCell.classList.add('secret-color-highlight');
+        }
+    }
 
     if (gameData.guesses) {
         if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || gameData.gameState === 'roundSummary' || isCueGiver) {
