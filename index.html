@@ -15,6 +15,16 @@
 
         <!-- Lobby Screen -->
         <div id="lobby-screen" class="card text-center fade-in">
+            <!-- Paleta de colores decorativa añadida -->
+            <div class="color-palette mb-6">
+                <div class="palette-square" style="background-color: #ef4444;"></div>
+                <div class="palette-square" style="background-color: #f97316;"></div>
+                <div class="palette-square" style="background-color: #eab308;"></div>
+                <div class="palette-square" style="background-color: #22c55e;"></div>
+                <div class="palette-square" style="background-color: #3b82f6;"></div>
+                <div class="palette-square" style="background-color: #8b5cf6;"></div>
+                <div class="palette-square" style="background-color: #d946ef;"></div>
+            </div>
             <h1 class="text-4xl font-bold text-cyan-300 mb-2">Color Blind</h1>
             <p class="text-gray-400 mb-6">El juego de adivinar colores online.</p>
             
@@ -44,56 +54,44 @@
                 <!-- Player list will be populated here -->
             </ul>
             <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
-            <!-- Botón para salir añadido -->
-            <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Salir de la Partida</button>
+            <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al Inicio</button>
             <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
         </div>
 
 
         <!-- Game Screen -->
         <div id="game-screen" class="hidden w-full fade-in">
-            <!-- Cambiado a flexbox para mejor responsividad -->
             <div class="flex flex-col lg:flex-row gap-6">
                 <!-- Left Panel: Game Info & Players -->
                 <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
                     <h2 class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
-                    <div id="game-info" class="mb-4 space-y-3">
-                        <!-- Game status will be populated here -->
-                    </div>
+                    <div id="game-info" class="mb-4 space-y-3"></div>
                     <div class="flex-grow">
                         <h3 class="text-xl font-semibold mb-3">Puntuaciones</h3>
-                        <div id="player-scores" class="space-y-2">
-                            <!-- Player scores will be populated here -->
-                        </div>
+                        <div id="player-scores" class="space-y-2"></div>
                     </div>
-                     <!-- Botón para abandonar la partida en curso -->
-                    <button id="leave-game-btn" class="btn-secondary w-full mt-4">Abandonar Partida</button>
+                    <button id="leave-game-btn" class="btn-secondary w-full mt-4">Volver al Inicio</button>
                 </div>
 
                 <!-- Main Panel: Color Grid -->
-                <div class="lg:w-3/4 card order-1 lg:order-2">
+                <div class="lg:w-3/4 card order-1 lg:order-2 flex flex-col">
                     <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
                         <p>Tu color secreto es:</p>
                         <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
                         <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
                     </div>
-                    <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4">
-                        <!-- Clues will be shown here -->
-                    </div>
-                    <div id="color-grid-container" class="relative">
+                    <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4"></div>
+                    <div id="color-grid-container" class="relative flex-grow">
                         <div id="color-grid" class="color-grid"></div>
-                        <!-- Contenedor para el marco de puntuación -->
                         <div id="scoring-frame" class="scoring-frame hidden"></div>
                     </div>
-                    <div id="controls" class="mt-4 text-center">
-                        <!-- Controls will be populated here -->
-                    </div>
+                    <div id="controls" class="mt-4 text-center"></div>
                 </div>
             </div>
         </div>
         
         <!-- Round Summary Modal -->
-        <div id="round-summary-modal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div id="round-summary-modal" class="hidden modal-overlay">
             <div class="card max-w-lg w-full text-center fade-in">
                 <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
                 <div id="summary-content" class="space-y-2 mb-6"></div>
@@ -101,9 +99,20 @@
             </div>
         </div>
 
+        <!-- Confirmation Modal -->
+        <div id="confirm-leave-modal" class="hidden modal-overlay">
+            <div class="card max-w-sm w-full text-center fade-in">
+                <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
+                <p class="text-gray-400 mb-6">Tu progreso en esta partida se perderá.</p>
+                <div class="flex justify-center gap-4">
+                    <button id="cancel-leave-btn" class="btn-secondary">Cancelar</button>
+                    <button id="confirm-leave-btn" class="btn-primary bg-red-600 hover:bg-red-700">Sí, salir</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Enlace a tu nuevo archivo JavaScript -->
     <script src="script.js" type="module"></script>
 </body>
 </html>
