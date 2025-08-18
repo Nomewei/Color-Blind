@@ -46,21 +46,41 @@ const gameScreen = document.getElementById('game-screen');
 const colorGrid = document.getElementById('color-grid');
 const confirmLeaveModal = document.getElementById('confirm-leave-modal');
 const gameOverModal = document.getElementById('game-over-modal');
+const roundSummaryModal = document.getElementById('round-summary-modal');
 const soundToggle = document.getElementById('sound-toggle');
 
 // --- LÓGICA DE AUDIO ---
 let isMuted = true;
 let music;
-const synth = new Tone.Synth().toDestination();
+const synth = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: "sine" },
+    envelope: { attack: 0.01, decay: 0.2, sustain: 0.2, release: 0.8 },
+}).toDestination();
+synth.volume.value = -22; // Volumen de la música más bajo
+
+const actionSynth = new Tone.Synth().toDestination();
+actionSynth.volume.value = -10; // Volumen de efectos más alto
 
 const soundIcons = {
     muted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`,
     unmuted: `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z" /></svg>`
 };
 
-function playSound(note = "C4") {
+function playSound(type) {
     if (!isMuted) {
-        synth.triggerAttackRelease(note, "8n");
+        const now = Tone.now();
+        switch (type) {
+            case 'select':
+                actionSynth.triggerAttackRelease("C5", "16n", now);
+                break;
+            case 'confirm':
+                actionSynth.triggerAttackRelease("E5", "16n", now);
+                actionSynth.triggerAttackRelease("A5", "16n", now + 0.1);
+                break;
+            case 'win':
+                actionSynth.triggerAttackRelease("C6", "8n", now);
+                break;
+        }
     }
 }
 
@@ -68,10 +88,13 @@ function toggleMusic() {
     if (isMuted) {
         Tone.start();
         if (!music) {
+            const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
+            let index = 0;
             music = new Tone.Loop(time => {
-                synth.triggerAttackRelease("C2", "2n", time);
-                synth.triggerAttackRelease("G2", "2n", time + Tone.Time("2n").toSeconds());
-            }, "1m").start(0);
+                let note = notes[index % notes.length];
+                synth.triggerAttackRelease(note, "8n", time);
+                index++;
+            }, "8n").start(0);
         }
         Tone.Transport.start();
         isMuted = false;
@@ -83,7 +106,7 @@ function toggleMusic() {
     }
 }
 soundToggle.addEventListener('click', toggleMusic);
-soundToggle.innerHTML = soundIcons.muted; // Estado inicial
+soundToggle.innerHTML = soundIcons.muted;
 
 // --- LÓGICA DE AUTENTICACIÓN ---
 onAuthStateChanged(auth, async (user) => {
@@ -364,9 +387,21 @@ function updateUI(gameData) {
         document.getElementById('start-game-btn').style.display = isHost ? 'block' : 'none';
     } else if (gameData.gameState === 'gameOver') {
         showGameOver(gameData);
+    } else if (gameData.gameState === 'roundSummary') {
+        showRoundSummary(gameData);
     }
     else {
+        roundSummaryModal.classList.add('hidden');
         showScreen('game');
+        
+        const gameTitle = document.getElementById('game-title');
+        const playerNames = gameData.playerOrder.map(pid => gameData.players[pid].name);
+        if (playerNames.length === 2) {
+            gameTitle.textContent = `${playerNames[0]} vs ${playerNames[1]}`;
+        } else {
+            gameTitle.textContent = 'Partida Grupal';
+        }
+
         renderScores(gameData);
         renderBoard(gameData);
         renderGameInfo(gameData);
@@ -393,7 +428,14 @@ function renderScores(gameData) {
 }
 
 function renderBoard(gameData) {
-    document.querySelectorAll('.player-marker, .temp-marker').forEach(el => el.remove());
+    document.querySelectorAll('.player-marker, .temp-marker, .secret-color-highlight').forEach(el => {
+        if (el.classList.contains('secret-color-highlight')) {
+            el.classList.remove('secret-color-highlight');
+        } else {
+            el.remove();
+        }
+    });
+    
     const scoringFrame = document.getElementById('scoring-frame');
     scoringFrame.classList.add('hidden');
     const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
@@ -410,8 +452,16 @@ function renderBoard(gameData) {
         }
     };
 
+    if (isCueGiver && gameData.gameState !== 'scoring' && gameData.gameState !== 'gameOver' && gameData.gameState !== 'roundSummary') {
+        const { x, y } = gameData.currentCard;
+        const secretCell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
+        if (secretCell) {
+            secretCell.classList.add('secret-color-highlight');
+        }
+    }
+
     if (gameData.guesses) {
-        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || isCueGiver) {
+        if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || gameData.gameState === 'roundSummary' || isCueGiver) {
             Object.entries(gameData.guesses).forEach(([playerId, guesses]) => {
                 const player = gameData.players[playerId];
                 guesses.forEach(guess => drawMarker(guess, player));
@@ -429,7 +479,7 @@ function renderBoard(gameData) {
         drawMarker(temporaryGuess, gameData.players[currentUserId], true);
     }
 
-    if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver') {
+    if (gameData.gameState === 'scoring' || gameData.gameState === 'gameOver' || gameData.gameState === 'roundSummary') {
         const { x, y } = gameData.currentCard;
         const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
         if (!cell) return;
@@ -525,7 +575,12 @@ function renderControls(gameData) {
         const canGuessNow = (gameData.gameState === 'guessing_1' && myGuesses.length === 0) || (gameData.gameState === 'guessing_2' && myGuesses.length === 1);
         
         if (temporaryGuess) {
-            controlsContainer.innerHTML = `<button id="confirm-guess-btn" class="btn-primary">Confirmar Elección</button>`;
+            const tempColor = colorGrid.querySelector(`[data-x='${temporaryGuess.x}'][data-y='${temporaryGuess.y}']`).style.backgroundColor;
+            controlsContainer.innerHTML = `
+                <div class="flex items-center justify-center gap-4">
+                    <div class="color-preview" style="background-color: ${tempColor};"></div>
+                    <button id="confirm-guess-btn" class="btn-primary">Confirmar Elección</button>
+                </div>`;
             document.getElementById('confirm-guess-btn').onclick = confirmGuess;
         } else if (canGuessNow) {
             controlsContainer.innerHTML = `<p class="text-gray-400">Selecciona un color en el tablero.</p>`;
@@ -581,18 +636,18 @@ async function handleGridClick(e) {
     
     if (!canGuessNow) return;
 
-    playSound("C4");
+    playSound("select");
     temporaryGuess = {
         x: parseInt(cell.dataset.x),
         y: parseInt(cell.dataset.y)
     };
-    renderBoard(gameData); // Re-render to show temp marker
-    renderControls(gameData); // Re-render to show confirm button
+    renderBoard(gameData);
+    renderControls(gameData);
 }
 
 async function confirmGuess() {
     if (!temporaryGuess) return;
-    playSound("E4");
+    playSound("confirm");
 
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameSnap = await getDoc(gameRef);
@@ -660,7 +715,7 @@ async function calculateAndShowScores() {
     updatedPlayers[cueGiverId].score += cueGiverPoints;
     roundPoints[cueGiverId].points = cueGiverPoints;
     
-    await updateDoc(gameRef, { players: updatedPlayers });
+    await updateDoc(gameRef, { players: updatedPlayers, lastRoundSummary: roundPoints });
     
     const winner = Object.values(updatedPlayers).find(p => p.score >= gameData.gameSettings.scoreLimit);
     const roundLimitReached = gameData.currentRound >= gameData.gameSettings.roundLimit;
@@ -668,16 +723,21 @@ async function calculateAndShowScores() {
     if (winner || roundLimitReached) {
         await updateDoc(gameRef, { gameState: 'gameOver' });
     } else {
-        const summaryContent = document.getElementById('summary-content');
-        summaryContent.innerHTML = Object.values(roundPoints).map(p => `
-            <p><strong>${p.name}:</strong> +${p.points} puntos</p>
-        `).join('');
-        document.getElementById('round-summary-modal').classList.remove('hidden');
+        await updateDoc(gameRef, { gameState: 'roundSummary' });
     }
 }
 
+function showRoundSummary(gameData) {
+    const summaryContent = document.getElementById('summary-content');
+    const summaryTitle = document.getElementById('summary-title');
+    summaryTitle.textContent = `Fin de la Ronda ${gameData.currentRound} / ${gameData.gameSettings.roundLimit}`;
+    summaryContent.innerHTML = Object.values(gameData.lastRoundSummary).map(p => `
+        <p><strong>${p.name}:</strong> +${p.points} puntos</p>
+    `).join('');
+    roundSummaryModal.classList.remove('hidden');
+}
+
 document.getElementById('next-round-btn').addEventListener('click', async () => {
-    document.getElementById('round-summary-modal').classList.add('hidden');
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const gameSnap = await getDoc(gameRef);
     const gameData = gameSnap.data();
@@ -700,7 +760,7 @@ function showGameOver(gameData) {
     document.getElementById('winner-name').textContent = gameData.players[winner].name;
     gameOverModal.classList.remove('hidden');
     
-    playSound("C5");
+    playSound("win");
     const canvas = document.getElementById('confetti-canvas');
     const myConfetti = confetti.create(canvas, { resize: true });
     myConfetti({
