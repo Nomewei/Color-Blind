@@ -11,7 +11,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
 <body>
-  <!-- Botón sonido -->
   <div id="sound-toggle" class="sound-toggle"></div>
 
   <div id="app-container" class="w-full max-w-7xl mx-auto">
@@ -28,7 +27,7 @@
       </div>
 
       <h1 class="text-4xl font-bold text-cyan-300 mb-2">Color Blind</h1>
-      <p class="text-gray-400 mb-6">El juego de adivinar colores online</p>
+      <p class="text-gray-400 mb-6">El juego de adivinar colores online.</p>
 
       <div class="mb-4">
         <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu Nombre</label>
@@ -37,28 +36,26 @@
 
       <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center space-x-2">
         <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida">
         <button id="join-game-btn" class="btn-secondary">Unirse</button>
       </div>
-
       <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
     </div>
 
-    <!-- Sala de espera -->
+    <!-- Waiting room -->
     <div id="waiting-room-screen" class="hidden card text-center fade-in">
       <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
-      <p class="text-gray-400 mb-2">Comparte este código con tus amigos</p>
+      <p class="text-gray-400 mb-2">Comparte este código con tus amigos:</p>
       <div class="bg-gray-800 p-3 rounded-md mb-4 border border-gray-600">
         <p id="game-id-display" class="text-2xl font-mono font-bold tracking-widest cursor-pointer text-cyan-300" title="Click para copiar"></p>
       </div>
 
-      <h3 class="font-semibold mb-2">Jugadores Conectados</h3>
+      <h3 class="font-semibold mb-2">Jugadores Conectados:</h3>
       <ul id="player-list" class="text-left space-y-2 mb-6"></ul>
 
-      <!-- Opciones del juego -->
       <div id="game-options" class="mb-6 space-y-4 text-left">
-        <h3 class="font-semibold text-center mb-2">Condiciones y tablero</h3>
+        <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
 
         <div class="flex items-center justify-between">
           <label for="round-limit" class="text-gray-300">Límite de Rondas</label>
@@ -71,10 +68,10 @@
         </div>
 
         <div class="flex items-center justify-between">
-          <label for="grid-size-select" class="text-gray-300">Tamaño del tablero</label>
-          <select id="grid-size-select" class="input-field w-44">
-            <option value="30x16" selected>30 x 16 completo</option>
-            <option value="12x8">12 x 8 aleatorio por ronda</option>
+          <label for="board-size" class="text-gray-300">Tamaño del tablero</label>
+          <select id="board-size" class="input-field w-40">
+            <option value="full">30 x 16 completo</option>
+            <option value="compact">12 x 8 aleatorio por ronda</option>
           </select>
         </div>
 
@@ -83,13 +80,12 @@
 
       <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
       <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al Inicio</button>
-      <p class="text-xs text-gray-500 mt-2">Solo el creador puede empezar</p>
+      <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
     </div>
 
-    <!-- Partida -->
+    <!-- Game -->
     <div id="game-screen" class="hidden w-full fade-in">
       <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Panel izquierdo -->
         <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
           <h2 id="game-title" class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
           <div id="game-info" class="mb-4 space-y-3"></div>
@@ -102,38 +98,32 @@
           <button id="leave-game-btn" class="btn-secondary w-full mt-4">Volver al Inicio</button>
         </div>
 
-        <!-- Panel derecho -->
         <div class="lg:w-3/4 card order-1 lg:order-2 flex flex-col">
-          <!-- Vista del dador de pista -->
+          <!-- Panel del dador de pista -->
           <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
-            <p>Tu color secreto es</p>
+            <p id="cue-panel-title">Tu color secreto</p>
             <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
             <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
+
+            <!-- aquí aparecerán las 4 opciones de color cuando corresponda -->
+            <div id="candidate-swatches" class="hidden mt-3 flex items-center justify-center gap-2 flex-wrap"></div>
           </div>
 
-          <!-- Pistas dadas -->
           <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4"></div>
 
-          <!-- Tablero -->
           <div id="color-grid-container" class="relative flex-grow">
-            <!-- Ventanilla de turno -->
-            <div id="turn-hint" class="turn-hint hidden"></div>
-
             <div id="color-grid" class="color-grid"></div>
-
-            <!-- Marcos de puntuación -->
             <div id="scoring-box-3" class="scoring-overlay hidden"></div>
             <div id="scoring-box-2" class="scoring-overlay hidden"></div>
             <div id="scoring-box-1" class="scoring-overlay hidden"></div>
           </div>
 
-          <!-- Controles dinámicos -->
           <div id="controls" class="mt-4 text-center"></div>
         </div>
       </div>
     </div>
 
-    <!-- Resumen de ronda -->
+    <!-- Round summary -->
     <div id="round-summary-modal" class="hidden modal-overlay">
       <div class="card max-w-lg w-full text-center fade-in">
         <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
@@ -142,11 +132,11 @@
       </div>
     </div>
 
-    <!-- Confirmación de salida -->
+    <!-- Confirm leave -->
     <div id="confirm-leave-modal" class="hidden modal-overlay">
       <div class="card max-w-sm w-full text-center fade-in">
         <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
-        <p class="text-gray-400 mb-6">Tu progreso en esta partida se perderá</p>
+        <p class="text-gray-400 mb-6">Tu progreso en esta partida se perderá.</p>
         <div class="flex justify-center gap-4">
           <button id="cancel-leave-btn" class="btn-secondary">Cancelar</button>
           <button id="confirm-leave-btn" class="btn-primary bg-red-600 hover:bg-red-700">Sí, salir</button>
@@ -154,12 +144,12 @@
       </div>
     </div>
 
-    <!-- Fin de partida -->
+    <!-- Game over -->
     <div id="game-over-modal" class="hidden modal-overlay">
       <canvas id="confetti-canvas"></canvas>
       <div class="card max-w-md w-full text-center fade-in">
         <h2 class="text-4xl font-bold mb-4 winner-text">¡Fin de la Partida!</h2>
-        <p class="text-xl text-gray-300 mb-2">El ganador es</p>
+        <p class="text-xl text-gray-300 mb-2">El ganador es...</p>
         <p id="winner-name" class="text-5xl font-bold text-cyan-300 mb-8"></p>
         <button id="new-game-btn" class="btn-primary w-full">Jugar de Nuevo</button>
       </div>
