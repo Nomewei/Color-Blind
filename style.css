@@ -1,263 +1,58 @@
-/* Base y tema oscuro */
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #121212;
-  color: #E0E0E0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 1rem;
-  touch-action: manipulation;
-}
+body { font-family: 'Inter', sans-serif; background-color: #121212; color: #E0E0E0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 1rem; touch-action: manipulation }
 
-/* Tarjetas */
-.card {
-  background-color: #1E1E1E;
-  padding: 2rem;
-  border-radius: 0.75rem;
-  border: 1px solid #333;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
+.card { background-color: #1E1E1E; padding: 2rem; border-radius: 0.75rem; border: 1px solid #333; box-shadow: 0 10px 25px rgba(0,0,0,0.3) }
 
-/* Inputs */
-.input-field {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #444;
-  border-radius: 0.375rem;
-  background-color: #2a2a2a;
-  color: #E0E0E0;
-  transition: border-color 0.3s, box-shadow 0.3s;
-}
-.input-field:focus {
-  outline: none;
-  border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34,211,238,0.2);
-}
+.input-field { width: 100%; padding: 0.75rem 1rem; border: 1px solid #444; border-radius: 0.375rem; background-color: #2a2a2a; color: #E0E0E0; transition: border-color 0.3s, box-shadow 0.3s }
+.input-field:focus { outline: none; border-color: #22d3ee; box-shadow: 0 0 0 3px rgba(34,211,238,0.2) }
 
-/* Botones */
-.btn-primary {
-  background-color: #0891b2;
-  color: #fff;
-  font-weight: bold;
-  padding: 0.8rem 1rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.3s;
-  border: none;
-  cursor: pointer;
-}
+.btn-primary { background-color: #0891b2; color: white; font-weight: bold; padding: 0.8rem 1rem; border-radius: 0.375rem; transition: background-color 0.3s; border: none; cursor: pointer }
 .btn-primary:hover { background-color: #0e7490 }
-
-.btn-secondary {
-  background-color: #374151;
-  color: #fff;
-  font-weight: bold;
-  padding: 0.8rem 1rem;
-  border-radius: 0.375rem;
-  transition: background-color 0.3s;
-  border: none;
-  cursor: pointer;
-}
+.btn-secondary { background-color: #374151; color: white; font-weight: bold; padding: 0.8rem 1rem; border-radius: 0.375rem; transition: background-color 0.3s; border: none; cursor: pointer }
 .btn-secondary:hover { background-color: #4b5563 }
 
-/* Paleta decorativa */
-.color-palette {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-}
-.palette-square {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.375rem;
-  border: 2px solid #444;
-}
+.color-palette { display: flex; justify-content: center; gap: 0.5rem }
+.palette-square { width: 2rem; height: 2rem; border-radius: 0.375rem; border: 2px solid #444 }
 
-/* Contenedor del grid */
 #color-grid-container { position: relative }
 
-/* Grid de colores */
-.color-grid {
-  display: grid;
-  grid-template-columns: repeat(30, 1fr);
-  gap: 1px;
-  width: 100%;
-  max-width: 1200px;
-  margin: auto;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid #444;
-}
-.color-cell {
-  width: 100%;
-  padding-bottom: 100%;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.1s ease-in-out;
-}
-.color-cell:hover {
-  transform: scale(2.2);
-  z-index: 10;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
+.color-grid { display: grid; grid-template-columns: repeat(30,1fr); gap: 1px; width: 100%; max-width: 1200px; margin: auto; border-radius: 8px; overflow: hidden; border: 2px solid #444 }
+.color-cell { width: 100%; padding-bottom: 100%; position: relative; cursor: pointer; transition: transform 0.1s ease-in-out }
+.color-cell:hover { transform: scale(2.2); z-index: 10; border-radius: 4px; box-shadow: 0 0 10px rgba(255,255,255,0.5) }
 
-/* Marcadores */
-.player-marker {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70%;
-  height: 70%;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 0 5px rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 1px 1px 2px #000;
-}
+.player-marker { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 70%; height: 70%; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black }
 .temp-marker { border-style: dashed; opacity: 0.8 }
 
-/* Marcos de puntuación */
-.scoring-overlay {
-  position: absolute;
-  pointer-events: none;
-  box-sizing: border-box;
-  border-style: dashed;
-  border-radius: 4px;
-}
-#scoring-box-3 { border: 3px dashed #fff }
+.scoring-overlay { position: absolute; pointer-events: none; box-sizing: border-box; border-style: dashed; border-radius: 4px }
+#scoring-box-3 { border: 3px dashed white }
 #scoring-box-2 { border: 3px dashed #facc15 }
 #scoring-box-1 { border: 3px dashed #ef4444 }
 
-/* Resalte del color secreto */
-.secret-color-highlight {
-  outline: 3px dashed #fff;
-  outline-offset: -3px;
-  z-index: 5;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0% { opacity: 1 }
-  50% { opacity: 0.6 }
-  100% { opacity: 1 }
-}
+.secret-color-highlight { outline: 3px dashed white; outline-offset: -3px; z-index: 5; animation: pulse 2s infinite }
+@keyframes pulse { 0%{opacity:1} 50%{opacity:.6} 100%{opacity:1} }
 
-/* Animaciones */
-.fade-in { animation: fadeIn 0.5s ease-in-out }
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95) }
-  to { opacity: 1; transform: scale(1) }
-}
+.fade-in { animation: fadeIn .5s ease-in-out }
+@keyframes fadeIn { from{opacity:0; transform:scale(.95)} to{opacity:1; transform:scale(1)} }
 
-/* Pistas */
-#clue-display span {
-  font-size: 1.5rem;
-  font-weight: bold;
-  background-color: #374151;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  color: #f0f9ff;
-}
+#clue-display span { font-size: 1.5rem; font-weight: bold; background-color: #374151; padding: .5rem 1rem; border-radius: .5rem; color: #f0f9ff }
 
-/* Modales */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(0,0,0,0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 50;
-}
+.modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,.75); display: flex; align-items: center; justify-content: center; padding: 1rem; z-index: 50 }
 
-/* Game over */
-#confetti-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 100;
-}
+#confetti-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100 }
 .winner-text { animation: bounce 1s ease-in-out }
-@keyframes bounce {
-  0%,100% { transform: translateY(0) }
-  50% { transform: translateY(-10px) }
-}
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 
-/* Botón sonido */
-.sound-toggle {
-  position: fixed;
-  top: 1rem;
-  right: 1rem;
-  width: 40px;
-  height: 40px;
-  background-color: #374151;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 1000;
-  border: 2px solid #4b5563;
-}
+.sound-toggle { position: fixed; top: 1rem; right: 1rem; width: 40px; height: 40px; background-color: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000; border: 2px solid #4b5563 }
 .sound-toggle svg { width: 24px; height: 24px; color: #E0E0E0 }
 
-/* Previsualización */
-.color-preview {
-  width: 36px;
-  height: 36px;
-  border-radius: 0.375rem;
-  border: 2px solid #6b7280;
-}
+.color-preview { width: 36px; height: 36px; border-radius: .375rem; border: 2px solid #6b7280 }
 
-/* Móvil: que el tablero mande */
 @media (max-width: 1023px) {
   .card { padding: 1rem }
-
-  /* Card principal del tablero */
-  .card.order-1 {
-    position: relative;
-    padding-top: 3.25rem;
-  }
-
-  /* Pistas compactas */
-  #clue-display {
-    position: absolute;
-    top: 0.75rem;
-    left: 1rem;
-    right: 1rem;
-    z-index: 20;
-    height: auto !important;
-  }
-  #clue-display span {
-    font-size: 0.95rem;
-    padding: 0.2rem 0.5rem;
-  }
-
-  /* Panel del dador de pista más chico */
-  #cue-giver-view {
-    padding: 0.25rem !important;
-    margin-bottom: 0.25rem !important;
-  }
-  #secret-color-display {
-    width: 3.25rem !important;
-    height: 1.25rem !important;
-  }
-
-  /* El grid ocupa casi toda la altura útil */
-  .color-grid {
-    min-height: calc(100vh - 220px);
-  }
-
+  .card.order-1 { position: relative; padding-top: 3.25rem }
+  #clue-display { position: absolute; top: .75rem; left: 1rem; right: 1rem; z-index: 20; height: auto !important }
+  #clue-display span { font-size: .95rem; padding: .2rem .5rem }
+  #cue-giver-view { padding: .25rem !important; margin-bottom: .25rem !important }
+  #secret-color-display { width: 3.25rem !important; height: 1.25rem !important }
+  .color-grid { min-height: calc(100vh - 220px) }
   .palette-square { width: 1.25rem; height: 1.25rem }
 }
