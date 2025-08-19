@@ -50,19 +50,32 @@
       <div class="bg-gray-800 p-3 rounded-md mb-4 border border-gray-600">
         <p id="game-id-display" class="text-2xl font-mono font-bold tracking-widest cursor-pointer text-cyan-300" title="Click para copiar"></p>
       </div>
+
       <h3 class="font-semibold mb-2">Jugadores Conectados:</h3>
       <ul id="player-list" class="text-left space-y-2 mb-6"></ul>
 
+      <!-- Opciones del host -->
       <div id="game-options" class="mb-6 space-y-4 text-left">
         <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
+
         <div class="flex items-center justify-between">
-          <label for="round-limit" class="text-gray-300">Límite de Rondas:</label>
+          <label for="round-limit" class="text-gray-300">Límite de Rondas</label>
           <input type="number" id="round-limit" class="input-field w-24 text-center" value="10" min="1" />
         </div>
+
         <div class="flex items-center justify-between">
-          <label for="score-limit" class="text-gray-300">Límite de Puntos:</label>
+          <label for="score-limit" class="text-gray-300">Límite de Puntos</label>
           <input type="number" id="score-limit" class="input-field w-24 text-center" value="25" min="1" />
         </div>
+
+        <div class="flex items-center justify-between">
+          <label for="board-mode" class="text-gray-300">Tamaño del tablero</label>
+          <select id="board-mode" class="input-field w-44">
+            <option value="30x16">Completo 30x16</option>
+            <option value="8x12">Recorte 8x12 por ronda</option>
+          </select>
+        </div>
+
         <p id="game-limits-display" class="text-center text-cyan-400"></p>
       </div>
 
@@ -86,7 +99,7 @@
 
         <div class="lg:w-3/4 card order-1 lg:order-2 flex flex-col">
           <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
-            <p>Tu color secreto es:</p>
+            <p>Tu color secreto es</p>
             <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
             <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
           </div>
@@ -94,7 +107,7 @@
           <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4"></div>
 
           <div id="color-grid-container" class="relative flex-grow">
-            <div id="color-grid" class="color-grid"></div>
+            <div id="color-grid" class="color-grid" data-mode="30x16"></div>
             <div id="scoring-box-3" class="scoring-overlay hidden"></div>
             <div id="scoring-box-2" class="scoring-overlay hidden"></div>
             <div id="scoring-box-1" class="scoring-overlay hidden"></div>
