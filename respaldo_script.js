@@ -28,9 +28,9 @@ let currentHostId = null;
 
 const playerColors = ["#E53E3E","#DD6B20","#D69E2E","#38A169","#3182CE","#5A67D8","#805AD5","#D53F8C","#718096","#4A5568"];
 
-// Tamaño oficial 30x16
-const GRID_COLS = 30;
-const GRID_ROWS = 16;
+// Tamaño oficial 30 x 16
+const FULL_COLS = 30;
+const FULL_ROWS = 16;
 const COORD_LETTERS = "ABCDEFGHIJKLMNOP".split("");
 
 // Paleta EXACTA por filas A..P con 30 columnas
@@ -53,7 +53,7 @@ const PALETTE = {
   P:["#789A3B","#759E3E","#6B9A3F","#61963F","#549741","#479142","#3B8B42","#328842","#218243","#177A41","#0F793E","#0A7F42","#0C8847","#0E8E47","#109748","#159C4A","#23A048","#29A254","#31A55D","#36A764","#37A86E","#30A97B","#27AA87","#1FA995","#15AAA0","#0CA9AE","#0CACBE","#06ACCA","#03A8D8","#00A3E4"]
 };
 
-// Devuelve el color exacto por coordenadas x y
+// Helpers de paleta
 function getColorByXY(x, y) {
   const rowLetter = COORD_LETTERS[y];
   return PALETTE[rowLetter][x];
@@ -185,7 +185,11 @@ async function createGame(){
     players: { [currentUserId]: newPlayer },
     playerOrder: [currentUserId],
     gameState: "waiting",
-    gameSettings: { roundLimit: 10, scoreLimit: 25 },
+    gameSettings: {
+      roundLimit: 10,
+      scoreLimit: 25,
+      boardMode: "full_30x16" // por defecto
+    },
     createdAt: new Date()
   };
 
@@ -288,31 +292,53 @@ function copyGameId(){
   });
 }
 
-// Grid con paleta exacta
-function generateColorGrid(){
+// Board helpers
+function defaultBoard(){
+  return { mode: "full_30x16", startX: 0, startY: 0, cols: FULL_COLS, rows: FULL_ROWS };
+}
+
+function makeRandomMiniBoard(){
+  const cols = 12;
+  const rows = 8;
+  const startX = Math.floor(Math.random() * (FULL_COLS - cols + 1));
+  const startY = Math.floor(Math.random() * (FULL_ROWS - rows + 1));
+  return { mode: "mini_12x8", startX, startY, cols, rows };
+}
+
+function getActiveBoard(gameData){
+  if (gameData && gameData.currentBoard) return gameData.currentBoard;
+  return defaultBoard();
+}
+
+// Genera el grid visual según el board activo
+function generateColorGrid(gameData=null){
+  const board = getActiveBoard(gameData);
   colorGrid.innerHTML = "";
-  for (let y = 0; y < GRID_ROWS; y++){
-    for (let x = 0; x < GRID_COLS; x++){
+  colorGrid.style.gridTemplateColumns = `repeat(${board.cols}, 1fr)`;
+
+  for (let y = 0; y < board.rows; y++){
+    for (let x = 0; x < board.cols; x++){
+      const globalX = board.startX + x;
+      const globalY = board.startY + y;
+
       const cell = document.createElement("div");
       cell.classList.add("color-cell");
+      cell.style.backgroundColor = getColorByXY(globalX, globalY);
 
-      const color = getColorByXY(x, y);
-      cell.style.backgroundColor = color;
-
-      cell.dataset.x = x;
-      cell.dataset.y = y;
-      cell.dataset.coords = `${COORD_LETTERS[y]}${x + 1}`;
-      cell.title = `${COORD_LETTERS[y]}${x + 1}`;
+      cell.dataset.x = globalX;
+      cell.dataset.y = globalY;
+      cell.dataset.coords = `${COORD_LETTERS[globalY]}${globalX + 1}`;
+      cell.title = `${COORD_LETTERS[globalY]}${globalX + 1}`;
 
       colorGrid.appendChild(cell);
     }
   }
 }
 
-// Carta secreta usando la misma paleta
-function pickRandomCard(){
-  const x = Math.floor(Math.random() * GRID_COLS);
-  const y = Math.floor(Math.random() * GRID_ROWS);
+// Carta secreta usando el board activo
+function pickRandomCard(board){
+  const x = board.startX + Math.floor(Math.random() * board.cols);
+  const y = board.startY + Math.floor(Math.random() * board.rows);
   return { x, y, color: getColorByXY(x, y) };
 }
 
@@ -325,11 +351,15 @@ async function startGame(){
   if (gameData.hostId !== currentUserId){ alert("Solo el creador puede empezar."); return; }
   if (Object.keys(gameData.players).length < 2){ alert("Se necesitan al menos 2 jugadores."); return; }
 
-  const newCard = pickRandomCard();
+  const mode = gameData.gameSettings.boardMode || "full_30x16";
+  const board = mode === "mini_12x8" ? makeRandomMiniBoard() : defaultBoard();
+  const newCard = pickRandomCard(board);
+
   await updateDoc(gameRef, {
     gameState: "giving_clue_1",
     currentRound: 1,
     currentPlayerIndex: 0,
+    currentBoard: board,
     currentCard: newCard,
     clues: [],
     guesses: {}
@@ -356,20 +386,27 @@ function updateUI(gameData){
     const opts = document.getElementById("game-options");
     const roundLimitInput = document.getElementById("round-limit");
     const scoreLimitInput = document.getElementById("score-limit");
+    const boardModeSelect = document.getElementById("board-mode");
     const limits = document.getElementById("game-limits-display");
+
+    const mode = gameData.gameSettings.boardMode || "full_30x16";
+    boardModeSelect.value = mode;
 
     if (isHost){
       opts.classList.remove("hidden");
       limits.classList.add("hidden");
       roundLimitInput.disabled = false;
       scoreLimitInput.disabled = false;
+      boardModeSelect.disabled = false;
       roundLimitInput.value = gameData.gameSettings.roundLimit;
       scoreLimitInput.value = gameData.gameSettings.scoreLimit;
     } else {
       opts.classList.add("hidden");
       limits.classList.remove("hidden");
-      limits.textContent = `Jugar a ${gameData.gameSettings.roundLimit} rondas o ${gameData.gameSettings.scoreLimit} puntos.`;
+      const modeText = mode === "mini_12x8" ? "Tablero 12 x 8 aleatorio" : "Tablero 30 x 16 completo";
+      limits.textContent = `Jugar a ${gameData.gameSettings.roundLimit} rondas o ${gameData.gameSettings.scoreLimit} puntos. ${modeText}.`;
     }
+
     document.getElementById("start-game-btn").style.display = isHost ? "block" : "none";
     return;
   }
@@ -379,6 +416,9 @@ function updateUI(gameData){
 
   roundSummaryModal.classList.add("hidden");
   showScreen("game");
+
+  // Siempre regeneramos el grid según el board activo
+  generateColorGrid(gameData);
 
   const title = document.getElementById("game-title");
   const names = gameData.playerOrder.map(pid=> gameData.players[pid].name);
@@ -409,12 +449,14 @@ function renderScores(gameData){
 }
 
 function renderBoard(gameData){
+  // Limpieza de marcadores y resaltados
   document.querySelectorAll(".player-marker, .temp-marker, .secret-color-highlight").forEach(el=>{
     if (el.classList.contains("secret-color-highlight")) el.classList.remove("secret-color-highlight");
     else el.remove();
   });
   document.querySelectorAll(".scoring-overlay").forEach(el=> el.classList.add("hidden"));
 
+  const board = getActiveBoard(gameData);
   const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
   const isCueGiver = currentUserId === cueGiverId;
 
@@ -428,12 +470,14 @@ function renderBoard(gameData){
     cell.appendChild(m);
   };
 
+  // Resalta el color secreto para el dador de pista
   if (isCueGiver && gameData.gameState !== "scoring" && gameData.gameState !== "gameOver" && gameData.gameState !== "roundSummary"){
     const { x, y } = gameData.currentCard;
     const secretCell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
     if (secretCell) secretCell.classList.add("secret-color-highlight");
   }
 
+  // Marcadores
   if (gameData.guesses){
     if (gameData.gameState === "scoring" || gameData.gameState === "gameOver" || gameData.gameState === "roundSummary" || isCueGiver){
       Object.entries(gameData.guesses).forEach(([pid, guesses])=>{
@@ -449,6 +493,7 @@ function renderBoard(gameData){
 
   if (temporaryGuess) drawMarker(temporaryGuess, gameData.players[currentUserId], true);
 
+  // Marcos de puntuación
   if (gameData.gameState === "scoring" || gameData.gameState === "gameOver" || gameData.gameState === "roundSummary"){
     const { x, y } = gameData.currentCard;
     const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
@@ -458,11 +503,15 @@ function renderBoard(gameData){
     const h = cell.offsetHeight;
     const gap = 1;
 
+    // Posición dentro del grid visible
+    const idxX = x - board.startX;
+    const idxY = y - board.startY;
+
     function drawBox(size, id){
       const box = document.getElementById(id);
       if (!box) return;
-      box.style.left = `${(x - Math.floor(size / 2)) * (w + gap)}px`;
-      box.style.top = `${(y - Math.floor(size / 2)) * (h + gap)}px`;
+      box.style.left = `${(idxX - Math.floor(size / 2)) * (w + gap)}px`;
+      box.style.top = `${(idxY - Math.floor(size / 2)) * (h + gap)}px`;
       box.style.width = `${size * (w + gap) - gap}px`;
       box.style.height = `${size * (h + gap) - gap}px`;
       box.classList.remove("hidden");
@@ -711,11 +760,16 @@ document.getElementById("next-round-btn").addEventListener("click", async ()=>{
   const nextIndex = (gameData.currentPlayerIndex + 1) % gameData.playerOrder.length;
   const nextRound = nextIndex === 0 ? gameData.currentRound + 1 : gameData.currentRound;
 
+  // Si el modo es mini, generar nuevo subtablero aleatorio por ronda
+  const mode = gameData.gameSettings.boardMode || "full_30x16";
+  const nextBoard = mode === "mini_12x8" ? makeRandomMiniBoard() : gameData.currentBoard || defaultBoard();
+
   await updateDoc(gameRef, {
     gameState: "giving_clue_1",
     currentRound: nextRound,
     currentPlayerIndex: nextIndex,
-    currentCard: pickRandomCard(),
+    currentBoard: nextBoard,
+    currentCard: pickRandomCard(nextBoard),
     clues: [],
     guesses: {}
   });
@@ -755,13 +809,14 @@ function showScreen(name){
   document.getElementById(`${name}-screen`).classList.remove("hidden");
 }
 
-// Inicio
+// Inicio con grid completo por defecto en memoria local
 generateColorGrid();
 colorGrid.addEventListener("click", handleGridClick);
 
 // Ajustes host
 document.getElementById("round-limit").addEventListener("change", e=> updateGameSettings({ roundLimit: parseInt(e.target.value) }));
 document.getElementById("score-limit").addEventListener("change", e=> updateGameSettings({ scoreLimit: parseInt(e.target.value) }));
+document.getElementById("board-mode").addEventListener("change", e=> updateGameSettings({ boardMode: e.target.value }));
 
 async function updateGameSettings(newSettings){
   if (!currentGameId) return;
