@@ -1,22 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Color Blind Online</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
 <body>
-
-  <!-- Botón de sonido -->
   <div id="sound-toggle" class="sound-toggle"></div>
 
   <div id="app-container" class="w-full max-w-7xl mx-auto">
-
     <!-- Lobby -->
     <div id="lobby-screen" class="card text-center fade-in">
       <div class="color-palette mb-6">
@@ -33,19 +32,18 @@
 
       <div class="mb-4">
         <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu Nombre</label>
-        <input type="text" id="player-name" class="input-field" placeholder="Ej: Ana">
+        <input type="text" id="player-name" class="input-field" placeholder="Ej: Ana" />
       </div>
 
       <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
-
       <div class="flex items-center space-x-2">
-        <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida">
+        <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida" />
         <button id="join-game-btn" class="btn-secondary">Unirse</button>
       </div>
       <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
     </div>
 
-    <!-- Sala de espera -->
+    <!-- Waiting room -->
     <div id="waiting-room-screen" class="hidden card text-center fade-in">
       <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
       <p class="text-gray-400 mb-2">Comparte este código con tus amigos:</p>
@@ -59,11 +57,11 @@
         <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
         <div class="flex items-center justify-between">
           <label for="round-limit" class="text-gray-300">Límite de Rondas:</label>
-          <input type="number" id="round-limit" class="input-field w-24 text-center" value="10" min="1">
+          <input type="number" id="round-limit" class="input-field w-24 text-center" value="10" min="1" />
         </div>
         <div class="flex items-center justify-between">
           <label for="score-limit" class="text-gray-300">Límite de Puntos:</label>
-          <input type="number" id="score-limit" class="input-field w-24 text-center" value="25" min="1">
+          <input type="number" id="score-limit" class="input-field w-24 text-center" value="25" min="1" />
         </div>
         <p id="game-limits-display" class="text-center text-cyan-400"></p>
       </div>
@@ -73,7 +71,7 @@
       <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
     </div>
 
-    <!-- Juego -->
+    <!-- Game -->
     <div id="game-screen" class="hidden w-full fade-in">
       <div class="flex flex-col lg:flex-row gap-6">
         <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
@@ -97,8 +95,6 @@
 
           <div id="color-grid-container" class="relative flex-grow">
             <div id="color-grid" class="color-grid"></div>
-
-            <!-- Tres marcos de puntuación que usa el JS -->
             <div id="scoring-box-3" class="scoring-overlay hidden"></div>
             <div id="scoring-box-2" class="scoring-overlay hidden"></div>
             <div id="scoring-box-1" class="scoring-overlay hidden"></div>
@@ -109,7 +105,7 @@
       </div>
     </div>
 
-    <!-- Modal resumen de ronda -->
+    <!-- Round summary -->
     <div id="round-summary-modal" class="hidden modal-overlay">
       <div class="card max-w-lg w-full text-center fade-in">
         <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
@@ -118,7 +114,7 @@
       </div>
     </div>
 
-    <!-- Modal confirmación salida -->
+    <!-- Confirm leave -->
     <div id="confirm-leave-modal" class="hidden modal-overlay">
       <div class="card max-w-sm w-full text-center fade-in">
         <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
@@ -130,7 +126,7 @@
       </div>
     </div>
 
-    <!-- Modal fin de partida -->
+    <!-- Game over -->
     <div id="game-over-modal" class="hidden modal-overlay">
       <canvas id="confetti-canvas"></canvas>
       <div class="card max-w-md w-full text-center fade-in">
@@ -140,7 +136,6 @@
         <button id="new-game-btn" class="btn-primary w-full">Jugar de Nuevo</button>
       </div>
     </div>
-
   </div>
 
   <script src="script.js" type="module"></script>
