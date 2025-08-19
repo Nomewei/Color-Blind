@@ -11,13 +11,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
 <body>
-
-  <!-- Botón de sonido -->
   <div id="sound-toggle" class="sound-toggle"></div>
 
   <div id="app-container" class="w-full max-w-7xl mx-auto">
-
-    <!-- Lobby -->
     <div id="lobby-screen" class="card text-center fade-in">
       <div class="color-palette mb-6">
         <div class="palette-square" style="background-color:#ef4444"></div>
@@ -37,7 +33,6 @@
       </div>
 
       <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
-
       <div class="flex items-center space-x-2">
         <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida">
         <button id="join-game-btn" class="btn-secondary">Unirse</button>
@@ -45,7 +40,6 @@
       <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
     </div>
 
-    <!-- Sala de espera -->
     <div id="waiting-room-screen" class="hidden card text-center fade-in">
       <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
       <p class="text-gray-400 mb-2">Comparte este código con tus amigos:</p>
@@ -73,7 +67,6 @@
       <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
     </div>
 
-    <!-- Juego -->
     <div id="game-screen" class="hidden w-full fade-in">
       <div class="flex flex-col lg:flex-row gap-6">
         <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
@@ -97,8 +90,6 @@
 
           <div id="color-grid-container" class="relative flex-grow">
             <div id="color-grid" class="color-grid"></div>
-
-            <!-- Tres marcos de puntuación que usa el JS -->
             <div id="scoring-box-3" class="scoring-overlay hidden"></div>
             <div id="scoring-box-2" class="scoring-overlay hidden"></div>
             <div id="scoring-box-1" class="scoring-overlay hidden"></div>
@@ -109,7 +100,6 @@
       </div>
     </div>
 
-    <!-- Modal resumen de ronda -->
     <div id="round-summary-modal" class="hidden modal-overlay">
       <div class="card max-w-lg w-full text-center fade-in">
         <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
@@ -118,7 +108,6 @@
       </div>
     </div>
 
-    <!-- Modal confirmación salida -->
     <div id="confirm-leave-modal" class="hidden modal-overlay">
       <div class="card max-w-sm w-full text-center fade-in">
         <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
@@ -130,7 +119,6 @@
       </div>
     </div>
 
-    <!-- Modal fin de partida -->
     <div id="game-over-modal" class="hidden modal-overlay">
       <canvas id="confetti-canvas"></canvas>
       <div class="card max-w-md w-full text-center fade-in">
@@ -140,7 +128,6 @@
         <button id="new-game-btn" class="btn-primary w-full">Jugar de Nuevo</button>
       </div>
     </div>
-
   </div>
 
   <script src="script.js" type="module"></script>
