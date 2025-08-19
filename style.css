@@ -78,21 +78,28 @@ body {
 #color-grid-container {
   position: relative;
   margin-inline: auto;
-  /* En desktop ocupa el ancho disponible con límite */
   max-width: 1200px;
+  width: 100%;
+  /* Centrado perfecto del tablero en cualquier tamaño */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Grid de colores */
 .color-grid {
-  --grid-cols: 30; /* valor por defecto, el script lo sobreescribe inline */
+  /* el script ajusta las columnas dinámicamente */
   display: grid;
-  grid-template-columns: repeat(var(--grid-cols), 1fr);
+  grid-template-columns: repeat(30, 1fr);
   gap: 1px;
   width: 100%;
-  margin: auto;
+  max-width: 1200px;
+  margin: 0 auto;
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid #444;
+  /* asegura visibilidad en escritorio */
+  min-height: 420px;
 }
 
 /* Celdas cuadradas */
@@ -227,28 +234,35 @@ body {
   border: 2px solid #6b7280;
 }
 
+/* Desktop grande: tablero más dominante si hay espacio */
+@media (min-width: 1280px) {
+  .color-grid { min-height: 520px; }
+}
+
 /* MOBILE FIRST */
 @media (max-width: 1023px) {
   .card { padding: 1.5rem; }
 
-  /* Card principal del juego con pista fija arriba */
+  /* Card principal con pista fija arriba */
   .card.order-1 {
     position: relative;
     padding-top: 5rem;
   }
 
-  /* Contenedor del grid: usa la altura para calcular el ancho con relación 30/16
-     Esto hace que el 30x16 se vea más alto y no tan “estirado” */
+  /* Contenedor centrado y dimensionado por altura */
   #color-grid-container {
-    /* limita el alto visible del panel de juego en móviles */
-    max-height: 70vh;
-    /* calcula un ancho en función de la relación 30/16 */
-    width: min(96vw, calc(70vh * (30 / 16)));
+    max-height: 72vh;
+    width: min(96vw, calc(72vh * (30 / 16)));
+    /* fuerza centrado absoluto del tablero */
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  /* El grid ocupa la mayor parte del alto disponible */
+  /* El grid ocupa la mayor parte del alto visible */
   .color-grid {
-    min-height: 58vh;
+    min-height: 62vh;
+    width: 100%;
   }
 
   /* Pista más compacta */
@@ -275,7 +289,7 @@ body {
     height: 1.5rem !important;
   }
 
-  /* Hover menos agresivo para no tapar el tablero */
+  /* Hover menos agresivo en móvil */
   .color-cell:hover { transform: scale(1.8); }
 
   /* Paleta decorativa más pequeña */
