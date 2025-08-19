@@ -1,23 +1,21 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Color Blind Online</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
 <body>
-  <!-- Botón de sonido -->
+  <!-- Botón sonido -->
   <div id="sound-toggle" class="sound-toggle"></div>
 
   <div id="app-container" class="w-full max-w-7xl mx-auto">
-    <!-- LOBBY -->
+    <!-- Lobby -->
     <div id="lobby-screen" class="card text-center fade-in">
       <div class="color-palette mb-6">
         <div class="palette-square" style="background-color:#ef4444"></div>
@@ -34,20 +32,20 @@
 
       <div class="mb-4">
         <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu Nombre</label>
-        <input id="player-name" type="text" class="input-field" placeholder="Ej: Ana" />
+        <input type="text" id="player-name" class="input-field" placeholder="Ej: Ana">
       </div>
 
       <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
 
-      <div class="flex items-center space-x-2">
-        <input id="join-game-id" type="text" class="input-field" placeholder="Código de la partida" />
+      <div class="flex items-center gap-2">
+        <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida">
         <button id="join-game-btn" class="btn-secondary">Unirse</button>
       </div>
 
       <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
     </div>
 
-    <!-- SALA DE ESPERA -->
+    <!-- Sala de espera -->
     <div id="waiting-room-screen" class="hidden card text-center fade-in">
       <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
       <p class="text-gray-400 mb-2">Comparte este código con tus amigos</p>
@@ -58,26 +56,25 @@
       <h3 class="font-semibold mb-2">Jugadores Conectados</h3>
       <ul id="player-list" class="text-left space-y-2 mb-6"></ul>
 
-      <!-- Opciones de partida para el anfitrión -->
+      <!-- Opciones del juego -->
       <div id="game-options" class="mb-6 space-y-4 text-left">
-        <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
+        <h3 class="font-semibold text-center mb-2">Condiciones y tablero</h3>
 
         <div class="flex items-center justify-between">
           <label for="round-limit" class="text-gray-300">Límite de Rondas</label>
-          <input id="round-limit" type="number" class="input-field w-24 text-center" value="10" min="1" />
+          <input type="number" id="round-limit" class="input-field w-24 text-center" value="10" min="1">
         </div>
 
         <div class="flex items-center justify-between">
           <label for="score-limit" class="text-gray-300">Límite de Puntos</label>
-          <input id="score-limit" type="number" class="input-field w-24 text-center" value="25" min="1" />
+          <input type="number" id="score-limit" class="input-field w-24 text-center" value="25" min="1">
         </div>
 
-        <!-- NUEVO Selector de tamaño de tablero -->
         <div class="flex items-center justify-between">
-          <label for="board-mode" class="text-gray-300">Tamaño del tablero</label>
-          <select id="board-mode" class="input-field w-44 text-sm">
-            <option value="full_30x16" selected>30 x 16 completo</option>
-            <option value="mini_12x8">12 x 8 aleatorio por ronda</option>
+          <label for="grid-size-select" class="text-gray-300">Tamaño del tablero</label>
+          <select id="grid-size-select" class="input-field w-44">
+            <option value="30x16" selected>30 x 16 completo</option>
+            <option value="12x8">12 x 8 aleatorio por ronda</option>
           </select>
         </div>
 
@@ -86,13 +83,13 @@
 
       <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
       <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al Inicio</button>
-      <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar</p>
+      <p class="text-xs text-gray-500 mt-2">Solo el creador puede empezar</p>
     </div>
 
-    <!-- JUEGO -->
+    <!-- Partida -->
     <div id="game-screen" class="hidden w-full fade-in">
       <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Lateral -->
+        <!-- Panel izquierdo -->
         <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
           <h2 id="game-title" class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
           <div id="game-info" class="mb-4 space-y-3"></div>
@@ -105,7 +102,7 @@
           <button id="leave-game-btn" class="btn-secondary w-full mt-4">Volver al Inicio</button>
         </div>
 
-        <!-- Tablero -->
+        <!-- Panel derecho -->
         <div class="lg:w-3/4 card order-1 lg:order-2 flex flex-col">
           <!-- Vista del dador de pista -->
           <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
@@ -114,11 +111,14 @@
             <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
           </div>
 
-          <!-- Pistas -->
+          <!-- Pistas dadas -->
           <div id="clue-display" class="text-center mb-4 h-12 flex items-center justify-center gap-4"></div>
 
-          <!-- Contenedor del grid -->
+          <!-- Tablero -->
           <div id="color-grid-container" class="relative flex-grow">
+            <!-- Ventanilla de turno -->
+            <div id="turn-hint" class="turn-hint hidden"></div>
+
             <div id="color-grid" class="color-grid"></div>
 
             <!-- Marcos de puntuación -->
@@ -133,16 +133,16 @@
       </div>
     </div>
 
-    <!-- Modal resumen de ronda -->
+    <!-- Resumen de ronda -->
     <div id="round-summary-modal" class="hidden modal-overlay">
       <div class="card max-w-lg w-full text-center fade-in">
-        <h2 id="summary-title" class="text-3xl font-bold mb-4 text-cyan-300">Fin de la Ronda</h2>
+        <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
         <div id="summary-content" class="space-y-2 mb-6"></div>
         <button id="next-round-btn" class="btn-primary">Siguiente Ronda</button>
       </div>
     </div>
 
-    <!-- Modal confirmar salida -->
+    <!-- Confirmación de salida -->
     <div id="confirm-leave-modal" class="hidden modal-overlay">
       <div class="card max-w-sm w-full text-center fade-in">
         <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
@@ -154,7 +154,7 @@
       </div>
     </div>
 
-    <!-- Modal fin de partida -->
+    <!-- Fin de partida -->
     <div id="game-over-modal" class="hidden modal-overlay">
       <canvas id="confetti-canvas"></canvas>
       <div class="card max-w-md w-full text-center fade-in">
