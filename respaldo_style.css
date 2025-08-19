@@ -1,4 +1,4 @@
-/* Base y tema oscuro */
+/* Base oscuro */
 body {
   font-family: 'Inter', sans-serif;
   background-color: #121212;
@@ -17,7 +17,7 @@ body {
   padding: 2rem;
   border-radius: 0.75rem;
   border: 1px solid #333;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
 }
 
 /* Inputs */
@@ -33,7 +33,7 @@ body {
 .input-field:focus {
   outline: none;
   border-color: #22d3ee;
-  box-shadow: 0 0 0 3px rgba(34,211,238,0.2);
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
 }
 
 /* Botones */
@@ -47,7 +47,7 @@ body {
   border: none;
   cursor: pointer;
 }
-.btn-primary:hover { background-color: #0e7490 }
+.btn-primary:hover { background-color: #0e7490; }
 
 .btn-secondary {
   background-color: #374151;
@@ -59,7 +59,7 @@ body {
   border: none;
   cursor: pointer;
 }
-.btn-secondary:hover { background-color: #4b5563 }
+.btn-secondary:hover { background-color: #4b5563; }
 
 /* Paleta decorativa */
 .color-palette {
@@ -75,32 +75,46 @@ body {
 }
 
 /* Contenedor del grid */
-#color-grid-container { position: relative }
+#color-grid-container {
+  position: relative;
+  margin-inline: auto;
+  max-width: 1200px;
+  width: 100%;
+  /* Centrado perfecto del tablero en cualquier tamaño */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 /* Grid de colores */
 .color-grid {
+  /* el script ajusta las columnas dinámicamente */
   display: grid;
   grid-template-columns: repeat(30, 1fr);
   gap: 1px;
   width: 100%;
   max-width: 1200px;
-  margin: auto;
+  margin: 0 auto;
   border-radius: 8px;
   overflow: hidden;
   border: 2px solid #444;
+  /* asegura visibilidad en escritorio */
+  min-height: 420px;
 }
+
+/* Celdas cuadradas */
 .color-cell {
   width: 100%;
   padding-bottom: 100%;
   position: relative;
   cursor: pointer;
-  transition: transform 0.1s ease-in-out;
+  transition: transform 0.12s ease-in-out, box-shadow 0.12s ease-in-out;
 }
 .color-cell:hover {
   transform: scale(2.2);
   z-index: 10;
   border-radius: 4px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
 }
 
 /* Marcadores */
@@ -122,7 +136,7 @@ body {
   color: #fff;
   text-shadow: 1px 1px 2px #000;
 }
-.temp-marker { border-style: dashed; opacity: 0.8 }
+.temp-marker { border-style: dashed; opacity: 0.85; }
 
 /* Marcos de puntuación */
 .scoring-overlay {
@@ -132,11 +146,11 @@ body {
   border-style: dashed;
   border-radius: 4px;
 }
-#scoring-box-3 { border: 3px dashed #fff }
-#scoring-box-2 { border: 3px dashed #facc15 }
-#scoring-box-1 { border: 3px dashed #ef4444 }
+#scoring-box-3 { border: 3px dashed #fff; }
+#scoring-box-2 { border: 3px dashed #facc15; }
+#scoring-box-1 { border: 3px dashed #ef4444; }
 
-/* Resalte del color secreto */
+/* Resalte de color secreto */
 .secret-color-highlight {
   outline: 3px dashed #fff;
   outline-offset: -3px;
@@ -144,16 +158,16 @@ body {
   animation: pulse 2s infinite;
 }
 @keyframes pulse {
-  0% { opacity: 1 }
-  50% { opacity: 0.6 }
-  100% { opacity: 1 }
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }
 
-/* Animaciones */
-.fade-in { animation: fadeIn 0.5s ease-in-out }
+/* Animación de entrada */
+.fade-in { animation: fadeIn 0.5s ease-in-out; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95) }
-  to { opacity: 1; transform: scale(1) }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 /* Pistas */
@@ -170,7 +184,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0,0,0,0.75);
+  background-color: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,7 +192,7 @@ body {
   z-index: 50;
 }
 
-/* Game over */
+/* Game Over */
 #confetti-canvas {
   position: fixed;
   top: 0;
@@ -188,10 +202,10 @@ body {
   pointer-events: none;
   z-index: 100;
 }
-.winner-text { animation: bounce 1s ease-in-out }
+.winner-text { animation: bounce 1s ease-in-out; }
 @keyframes bounce {
-  0%,100% { transform: translateY(0) }
-  50% { transform: translateY(-10px) }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 /* Botón sonido */
@@ -210,9 +224,9 @@ body {
   z-index: 1000;
   border: 2px solid #4b5563;
 }
-.sound-toggle svg { width: 24px; height: 24px; color: #E0E0E0 }
+.sound-toggle svg { width: 24px; height: 24px; color: #E0E0E0; }
 
-/* Previsualización */
+/* Previsualización de color */
 .color-preview {
   width: 36px;
   height: 36px;
@@ -220,44 +234,67 @@ body {
   border: 2px solid #6b7280;
 }
 
-/* Móvil: que el tablero mande */
-@media (max-width: 1023px) {
-  .card { padding: 1rem }
+/* Desktop grande: tablero más dominante si hay espacio */
+@media (min-width: 1280px) {
+  .color-grid { min-height: 520px; }
+}
 
-  /* Card principal del tablero */
+/* MOBILE FIRST */
+@media (max-width: 1023px) {
+  .card { padding: 1.5rem; }
+
+  /* Card principal con pista fija arriba */
   .card.order-1 {
     position: relative;
-    padding-top: 3.25rem;
+    padding-top: 5rem;
   }
 
-  /* Pistas compactas */
+  /* Contenedor centrado y dimensionado por altura */
+  #color-grid-container {
+    max-height: 72vh;
+    width: min(96vw, calc(72vh * (30 / 16)));
+    /* fuerza centrado absoluto del tablero */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* El grid ocupa la mayor parte del alto visible */
+  .color-grid {
+    min-height: 62vh;
+    width: 100%;
+  }
+
+  /* Pista más compacta */
   #clue-display {
     position: absolute;
-    top: 0.75rem;
-    left: 1rem;
-    right: 1rem;
+    top: 1.2rem;
+    left: 1.2rem;
+    right: 1.2rem;
     z-index: 20;
     height: auto !important;
   }
   #clue-display span {
-    font-size: 0.95rem;
-    padding: 0.2rem 0.5rem;
+    font-size: 1.1rem;
+    padding: 0.25rem 0.75rem;
   }
 
-  /* Panel del dador de pista más chico */
+  /* Panel del dador de pista más compacto */
   #cue-giver-view {
-    padding: 0.25rem !important;
-    margin-bottom: 0.25rem !important;
+    padding: 0.5rem !important;
+    margin-bottom: 0.5rem !important;
   }
   #secret-color-display {
-    width: 3.25rem !important;
-    height: 1.25rem !important;
+    width: 4rem !important;
+    height: 1.5rem !important;
   }
 
-  /* El grid ocupa casi toda la altura útil */
-  .color-grid {
-    min-height: calc(100vh - 220px);
-  }
+  /* Hover menos agresivo en móvil */
+  .color-cell:hover { transform: scale(1.8); }
 
-  .palette-square { width: 1.25rem; height: 1.25rem }
+  /* Paleta decorativa más pequeña */
+  .palette-square {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
 }
