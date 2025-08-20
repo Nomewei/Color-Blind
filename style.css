@@ -1,263 +1,264 @@
-/* =========================
-   Base / Tema
-   ========================= */
+/* ========== Base ========== */
 :root{
-  --bg:#121212;
-  --panel:#1E1E1E;
-  --border:#333;
-  --text:#E0E0E0;
-  --cyan:#22d3ee;
-  --cyan-700:#0891b2;
-  --muted:#374151;
+  --grid-gap:1px;
 }
-*{box-sizing:border-box}
-html,body{height:100%}
+html, body{ height:100%; }
 body{
-  font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  /* quitamos el centrado flex para evitar cortes en la parte superior */
-  display:block;
+  font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background:#121212;
+  color:#E0E0E0;
   min-height:100vh;
-  /* respetar notch/barra de estado */
-  padding-top:calc(env(safe-area-inset-top,0px) + 16px);
-  padding-right:16px;
-  padding-bottom:16px;
-  padding-left:16px;
+  padding:16px;
   touch-action:manipulation;
 }
-.hidden{display:none !important}
+.hidden{ display:none !important; }
 
-/* =========================
-   Cards, inputs, botones
-   ========================= */
+/* ========== Contenedores ========== */
 .card{
-  background:var(--panel);
+  background:#1E1E1E;
   padding:2rem;
+  border:1px solid #333;
   border-radius:12px;
-  border:1px solid var(--border);
-  box-shadow:0 10px 25px rgba(0,0,0,.3);
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
 }
+#app-container{
+  width:100%;
+  max-width:1280px;
+  margin-inline:auto;
+}
+
+/* ========== Inputs y botones ========== */
 .input-field{
   width:100%;
+  max-width:420px;
   padding:.75rem 1rem;
   border:1px solid #444;
-  border-radius:6px;
-  background:#2a2a2a;
-  color:var(--text);
-  transition:border-color .2s,box-shadow .2s;
+  border-radius:8px;
+  background:#232323;
+  color:#EAEAEA;
+  transition:border-color .2s, box-shadow .2s;
 }
 .input-field:focus{
   outline:none;
-  border-color:var(--cyan);
+  border-color:#22d3ee;
   box-shadow:0 0 0 3px rgba(34,211,238,.2);
 }
 .btn-primary{
-  background:var(--cyan-700);
+  background:#0891b2;
   color:#fff;
   font-weight:700;
   padding:.8rem 1rem;
-  border-radius:6px;
   border:none;
+  border-radius:8px;
   cursor:pointer;
-  transition:filter .2s,transform .02s;
+  transition:background .2s;
 }
-.btn-primary:hover{filter:brightness(.95)}
-.btn-primary:active{transform:translateY(1px)}
+.btn-primary:hover{ background:#0e7490; }
 .btn-secondary{
-  background:#374151;color:#fff;font-weight:700;
-  padding:.8rem 1rem;border-radius:6px;border:none;cursor:pointer;
+  background:#374151;
+  color:#fff;
+  font-weight:700;
+  padding:.8rem 1rem;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  transition:background .2s;
 }
-.btn-secondary:hover{filter:brightness(1.05)}
+.btn-secondary:hover{ background:#4b5563; }
 
-/* =========================
-   Sonido
-   ========================= */
-.sound-toggle{
-  position:fixed;top:1rem;right:1rem;
-  width:40px;height:40px;background:#374151;border-radius:999px;
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid #4b5563;z-index:1000;cursor:pointer;
-}
-.sound-toggle svg{width:24px;height:24px;color:#E0E0E0}
-
-/* =========================
-   Paleta decorativa lobby
-   ========================= */
-.color-palette{display:flex;justify-content:center;gap:.5rem}
-.palette-square{width:2rem;height:2rem;border-radius:6px;border:2px solid #444}
-
-/* =========================
-   Contenedor principal app
-   ========================= */
-#app-container{width:100%;max-width:1280px;margin:0 auto}
-
-/* =========================
-   Tablero de colores
-   ========================= */
-#color-grid-container{
-  position:relative;
+/* Pista input + botón a la misma altura */
+.clue-inline{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:0 1rem;
-  margin-top:.25rem;
+  gap:.75rem;
+  margin-top:.75rem;
+  flex-wrap:wrap;
+}
+@media (min-width:640px){
+  .clue-inline{ flex-wrap:nowrap; }
 }
 
+/* ========== Paleta decorativa en lobby ========== */
+.color-palette{ display:flex; justify-content:center; gap:.5rem; }
+.palette-square{ width:2rem; height:2rem; border-radius:6px; border:2px solid #444; }
+
+/* ========== Tablero ========== */
+#color-grid-container{
+  position:relative; /* clave para los recuadros */
+  margin-inline:auto;
+}
 .color-grid{
   display:grid;
-  gap:1px;
-  border:2px solid #444;
+  grid-template-columns:repeat(var(--grid-cols, 30), 1fr);
+  gap:var(--grid-gap);
+  width:100%;
+  margin-inline:auto;
   border-radius:12px;
   overflow:hidden;
-  margin:0 auto;
+  border:2px solid #444;
+  background:#111;
 }
-
-/* Tamaños por variante */
-.color-grid.grid-30x16{
-  width:clamp(720px, 90vw, 1200px);
-}
-.color-grid.grid-12x8{
-  width:clamp(360px, 92vw, 760px);
-}
-
-/* Celdas cuadradas */
 .color-cell{
-  width:100%;
-  padding-bottom:100%;
   position:relative;
+  width:100%;
+  padding-bottom:100%; /* cuadrada */
   cursor:pointer;
-  transition:transform .08s ease;
-}
-@media(hover:hover){
-  .color-cell:hover{
-    transform:scale(1.12);
-    z-index:2;
-    border-radius:4px;
-    box-shadow:0 0 10px rgba(255,255,255,.35);
-  }
 }
 
-/* =========================
-   Resaltado del color secreto
-   ========================= */
+/* ========== Marcadores ========== */
+/* Ficha circular para móvil */
+.player-marker{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:68%; height:68%;
+  border-radius:50%;
+  border:3px solid #fff;
+  box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6);
+  pointer-events:none;
+  z-index:7;
+}
+.temp-marker{ border-style:dashed; }
+
+/* Peón SVG para escritorio */
+.pawn-marker{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  width:78%; max-width:56px; aspect-ratio:1/1;
+  pointer-events:none;
+  filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));
+  z-index:7;
+}
+.pawn-marker svg{ width:100%; height:100%; }
+
+/* Mostrar ficha en móvil y peón en escritorio */
+@media (max-width:1023px){
+  .pawn-marker{ display:none; }
+}
+@media (min-width:1024px){
+  .player-marker{ display:none; }
+}
+
+/* ========== Resaltado del color secreto (solo dador) ========== */
 .secret-color-highlight{
-  outline:3px solid #fff;
+  outline:3px dashed #ffffff;
   outline-offset:-3px;
-  animation:glow 1.6s ease-in-out infinite;
+  z-index:6;
+  animation:blink 1.4s ease-in-out infinite;
 }
-@keyframes glow{
-  0%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0)}
-  50%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
-  100%{box-shadow:inset 0 0 0 0 rgba(255,255,255,0)}
+@keyframes blink{
+  0%{ opacity:1 }
+  50%{ opacity:.55 }
+  100%{ opacity:1 }
 }
 
-/* =========================
-   Overlays de puntuación
-   ========================= */
+/* ========== Recuadros de puntuación restaurados ========== */
 .scoring-overlay{
   position:absolute;
   pointer-events:none;
   box-sizing:border-box;
+  border-style:dashed;
   border-radius:6px;
-  border:3px dashed;
-  filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
+  z-index:6; /* por encima del tablero y debajo de marcadores */
 }
-#scoring-box-1{border-color:#ef4444}
-#scoring-box-2{border-color:#facc15}
-#scoring-box-3{border-color:#ffffff}
+#scoring-box-3{ border:3px dashed #ffffff; } /* 1x1 */
+#scoring-box-2{ border:3px dashed #facc15; } /* 3x3 */
+#scoring-box-1{ border:3px dashed #ef4444; } /* 5x5 */
 
-/* =========================
-   Vista del dador
-   ========================= */
+/* ========== Panel del dador ========= */
 #cue-giver-view{
-  background:#0f172a;border:1px solid rgba(34,211,238,.6);
-  border-radius:12px;padding:1rem 1rem 1.25rem;margin-bottom:1rem;
+  background:#0f1a23;
+  border:2px solid #22d3ee;
+  border-radius:12px;
 }
-#cue-giver-title{text-align:center;margin-bottom:.5rem}
 #secret-color-display{
-  width:130px;height:52px;margin:.25rem auto .4rem;
-  border-radius:10px;border:3px solid rgba(255,255,255,.35);
-  background:transparent;
+  width:120px; height:48px;
+  margin-inline:auto;
+  border-radius:10px;
+  border:4px solid rgba(255,255,255,.3);
 }
 #secret-color-coords{
-  font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace;
-  font-weight:800;text-align:center;color:#67e8f9;margin-bottom:.5rem;
+  text-align:center;
+  font-weight:800;
+  color:#67e8f9;
+  margin-top:.25rem;
 }
+
+/* Swatches candidatos */
 #candidate-swatches{
-  display:flex;gap:.75rem;justify-content:center;flex-wrap:wrap;margin:.5rem 0 .25rem;
+  display:flex;
+  justify-content:center;
+  gap:14px;
+  margin:12px 0 8px;
 }
-.swatch-btn{
-  width:64px;height:42px;border-radius:12px;border:3px solid rgba(255,255,255,.6);
-  box-shadow:0 4px 12px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.15);
-  cursor:pointer;transition:transform .06s ease, box-shadow .2s;
-}
-.swatch-btn:active{transform:translateY(1px)}
-#clue-form{display:flex;gap:.5rem;justify-content:center;margin-top:.75rem}
-#clue-input{max-width:320px}
-#submit-clue-btn{white-space:nowrap}
-.clue-inline{display:flex;align-items:center;gap:.5rem}
-
-/* =========================
-   Peón del jugador
-   ========================= */
-.pawn-marker{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.pawn-marker .pawn{width:68%;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35))}
-.pawn-marker .pawn-initial{
-  position:absolute;font-weight:900;font-size:clamp(10px,2.2vw,16px);
-  color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.6);
+.swatch{
+  width:72px; height:40px;
+  border-radius:12px;
+  border:3px solid rgba(255,255,255,.55);
+  box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.12);
 }
 
-/* =========================
-   Clues mostradas
-   ========================= */
+/* ========== Pistas mostradas ========= */
 #clue-display{
-  display:flex;align-items:center;justify-content:center;gap:.5rem;
-  margin:.25rem 0 .5rem;
+  display:flex;
+  justify-content:center;
+  gap:.5rem;
+  flex-wrap:wrap;
+  margin-bottom:.75rem;
 }
 #clue-display span{
-  font-size:1.25rem;font-weight:800;
-  background:#374151;color:#f0f9ff;
-  padding:.35rem .75rem;border-radius:.5rem;
+  font-size:1.05rem;
+  font-weight:700;
+  background:#374151;
+  padding:.35rem .7rem;
+  border-radius:.5rem;
+  color:#f0f9ff;
 }
 
-/* =========================
-   Modales
-   ========================= */
+/* ========== Modales y celebración ========== */
 .modal-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.75);
-  display:flex;align-items:center;justify-content:center;
-  padding:1rem;z-index:50;
+  position:fixed; inset:0; z-index:60;
+  background:rgba(0,0,0,.75);
+  display:flex; align-items:center; justify-content:center;
+  padding:1rem;
+}
+#confetti-canvas{
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  pointer-events:none; z-index:80;
+}
+.winner-text{ animation:bounce 1s ease-in-out; }
+@keyframes bounce{
+  0%,100%{ transform:translateY(0) }
+  50%{ transform:translateY(-10px) }
 }
 
-/* =========================
-   Game Over confetti
-   ========================= */
-#confetti-canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:100}
-.winner-text{animation:bounce 1s ease-in-out}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+/* ========== Botón de sonido ========== */
+.sound-toggle{
+  position:fixed; top:1rem; right:1rem;
+  width:40px; height:40px;
+  border-radius:9999px;
+  background:#374151;
+  border:2px solid #4b5563;
+  display:flex; align-items:center; justify-content:center;
+  color:#E0E0E0; z-index:1000; cursor:pointer;
+}
+.sound-toggle svg{ width:22px; height:22px; }
 
-/* =========================
-   Títulos
-   ========================= */
-#game-title{color:#67e8f9}
-.fade-in{animation:fadeIn .4s ease}
-@keyframes fadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+/* ========== Ajustes móviles ========== */
+@media (max-width:1023px){
+  .card{ padding:1.25rem; }
+  #secret-color-display{ width:96px; height:40px; }
+  .swatch{ width:64px; height:36px; }
+}
 
-/* =========================
-   Previsualización de color elegido
-   ========================= */
-.color-preview{width:36px;height:36px;border-radius:6px;border:2px solid #6b7280}
-
-/* =========================
-   Ajustes móviles
-   ========================= */
-@media(max-width:1023px){
-  .card{padding:1.25rem}
-  #color-grid-container{padding:0 .5rem;margin-top:.5rem}
-  .color-grid.grid-30x16{width:clamp(320px,94vw,980px)}
-  .color-grid.grid-12x8{width:clamp(320px,94vw,680px)}
-  #clue-display{margin-top:.25rem}
-  #cue-giver-view{padding:.8rem}
-  #secret-color-display{width:110px;height:46px}
+/* ========== Utilidades ========== */
+.fade-in{ animation:fadein .4s ease; }
+@keyframes fadein{
+  from{ opacity:0; transform:scale(.98) }
+  to{ opacity:1; transform:scale(1) }
 }
