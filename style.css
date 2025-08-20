@@ -1,98 +1,55 @@
-/* ========== Base ========== */
-:root{
-  --grid-gap:1px;
-}
-html, body{ height:100%; }
+/* ===== Base ===== */
+:root { --grid-gap: 1px; }
+html, body { height: 100%; }
 body{
-  font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  background:#121212;
-  color:#E0E0E0;
-  min-height:100vh;
-  padding:16px;
-  touch-action:manipulation;
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  background:#121212; color:#E0E0E0;
+  min-height:100vh; padding:16px; touch-action:manipulation;
 }
 .hidden{ display:none !important; }
 
-/* ========== Contenedores ========== */
+/* ===== Cards / layout ===== */
 .card{
-  background:#1E1E1E;
-  padding:2rem;
-  border:1px solid #333;
-  border-radius:12px;
-  box-shadow:0 10px 25px rgba(0,0,0,.35);
+  background:#1E1E1E; padding:2rem; border:1px solid #333;
+  border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,.35);
 }
-#app-container{
-  width:100%;
-  max-width:1280px;
-  margin-inline:auto;
-}
+#app-container{ width:100%; max-width:1280px; margin-inline:auto; }
 
-/* ========== Inputs y botones ========== */
+/* ===== Inputs / buttons ===== */
 .input-field{
-  width:100%;
-  max-width:420px;
-  padding:.75rem 1rem;
-  border:1px solid #444;
-  border-radius:8px;
-  background:#232323;
-  color:#EAEAEA;
+  width:100%; max-width:420px; padding:.75rem 1rem;
+  border:1px solid #444; border-radius:8px; background:#232323; color:#EAEAEA;
   transition:border-color .2s, box-shadow .2s;
 }
-.input-field:focus{
-  outline:none;
-  border-color:#22d3ee;
-  box-shadow:0 0 0 3px rgba(34,211,238,.2);
-}
-.btn-primary{
-  background:#0891b2;
-  color:#fff;
-  font-weight:700;
-  padding:.8rem 1rem;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  transition:background .2s;
-}
+.input-field:focus{ outline:none; border-color:#22d3ee; box-shadow:0 0 0 3px rgba(34,211,238,.2); }
+.btn-primary{ background:#0891b2; color:#fff; font-weight:700; padding:.8rem 1rem; border:none; border-radius:8px; cursor:pointer; transition:background .2s; }
 .btn-primary:hover{ background:#0e7490; }
-.btn-secondary{
-  background:#374151;
-  color:#fff;
-  font-weight:700;
-  padding:.8rem 1rem;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-  transition:background .2s;
-}
+.btn-secondary{ background:#374151; color:#fff; font-weight:700; padding:.8rem 1rem; border:none; border-radius:8px; cursor:pointer; transition:background .2s; }
 .btn-secondary:hover{ background:#4b5563; }
 
-/* Pista input + botón a la misma altura */
+/* Clue input + button same row (restaurado) */
 .clue-inline{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:.75rem;
-  margin-top:.75rem;
-  flex-wrap:wrap;
+  display:flex; align-items:center; justify-content:center; gap:.75rem; margin-top:.75rem; flex-wrap:wrap;
 }
-@media (min-width:640px){
-  .clue-inline{ flex-wrap:nowrap; }
-}
+@media (min-width:640px){ .clue-inline{ flex-wrap:nowrap; } }
 
-/* ========== Paleta decorativa en lobby ========== */
+/* ===== Decorative palette ===== */
 .color-palette{ display:flex; justify-content:center; gap:.5rem; }
 .palette-square{ width:2rem; height:2rem; border-radius:6px; border:2px solid #444; }
 
-/* ========== Tablero ========== */
+/* ===== GRID (recompuesto) ===== */
 #color-grid-container{
-  position:relative; /* clave para los recuadros */
+  position:relative; /* para overlays */
+  display:flex; align-items:center; justify-content:center;
   margin-inline:auto;
 }
 .color-grid{
-  display:grid;
+  /* clave: siempre visible y centrado */
+  display:grid !important;
   grid-template-columns:repeat(var(--grid-cols, 30), 1fr);
   gap:var(--grid-gap);
   width:100%;
+  max-width:1100px;            /* desktop 30x16 */
   margin-inline:auto;
   border-radius:12px;
   overflow:hidden;
@@ -102,163 +59,96 @@ body{
 .color-cell{
   position:relative;
   width:100%;
-  padding-bottom:100%; /* cuadrada */
+  padding-bottom:100%;         /* cuadradas */
   cursor:pointer;
 }
 
-/* ========== Marcadores ========== */
-/* Ficha circular para móvil */
-.player-marker{
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:68%; height:68%;
-  border-radius:50%;
-  border:3px solid #fff;
-  box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.35);
-  display:flex; align-items:center; justify-content:center;
-  font-weight:800; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6);
-  pointer-events:none;
-  z-index:7;
-}
-.temp-marker{ border-style:dashed; }
-
-/* Peón SVG para escritorio */
-.pawn-marker{
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:78%; max-width:56px; aspect-ratio:1/1;
-  pointer-events:none;
-  filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));
-  z-index:7;
-}
-.pawn-marker svg{ width:100%; height:100%; }
-
-/* Mostrar ficha en móvil y peón en escritorio */
+/* Tamaños responsivos para ambos formatos */
 @media (max-width:1023px){
-  .pawn-marker{ display:none; }
+  .color-grid{ max-width: 94vw; }
 }
 @media (min-width:1024px){
-  .player-marker{ display:none; }
+  /* cuando se juega 12x8 queremos celdas más grandes */
+  .color-grid[data-mode="12x8"]{ max-width:900px; }
+  .color-grid[data-mode="30x16"]{ max-width:1100px; }
 }
 
-/* ========== Resaltado del color secreto (solo dador) ========== */
+/* ===== Markers (móvil = ficha, desktop = peón) ===== */
+.player-marker{ /* ficha circular móvil */
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:68%; height:68%; border-radius:50%;
+  border:3px solid #fff; box-shadow:0 8px 18px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.35);
+  display:flex; align-items:center; justify-content:center;
+  font-weight:800; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.6);
+  pointer-events:none; z-index:7;
+}
+.temp-marker{ border-style:dashed; }
+.pawn-marker{ /* peón escritorio */
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:78%; max-width:56px; aspect-ratio:1/1; pointer-events:none; filter:drop-shadow(0 10px 14px rgba(0,0,0,.35)); z-index:7;
+}
+.pawn-marker svg{ width:100%; height:100%; }
+@media (max-width:1023px){ .pawn-marker{ display:none; } }
+@media (min-width:1024px){ .player-marker{ display:none; } }
+
+/* ===== Secret color highlight ===== */
 .secret-color-highlight{
-  outline:3px dashed #ffffff;
-  outline-offset:-3px;
-  z-index:6;
+  outline:3px dashed #fff; outline-offset:-3px; z-index:6;
   animation:blink 1.4s ease-in-out infinite;
 }
-@keyframes blink{
-  0%{ opacity:1 }
-  50%{ opacity:.55 }
-  100%{ opacity:1 }
-}
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.55} }
 
-/* ========== Recuadros de puntuación restaurados ========== */
+/* ===== Scoring boxes (restaurados) ===== */
 .scoring-overlay{
-  position:absolute;
-  pointer-events:none;
-  box-sizing:border-box;
-  border-style:dashed;
-  border-radius:6px;
-  z-index:6; /* por encima del tablero y debajo de marcadores */
+  position:absolute; pointer-events:none; box-sizing:border-box;
+  border-style:dashed; border-radius:6px; z-index:6;
 }
 #scoring-box-3{ border:3px dashed #ffffff; } /* 1x1 */
 #scoring-box-2{ border:3px dashed #facc15; } /* 3x3 */
 #scoring-box-1{ border:3px dashed #ef4444; } /* 5x5 */
-
-/* ========== Panel del dador ========= */
-#cue-giver-view{
-  background:#0f1a23;
-  border:2px solid #22d3ee;
-  border-radius:12px;
+@media (max-width:1023px){
+  /* En 12x8 dejamos solo 3x3; las otras se suelen ocultar vía JS,
+     pero por si acaso las hacemos invisibles en pantallas pequeñas cuando 12x8 */
+  .color-grid[data-mode="12x8"] ~ #scoring-box-1{ display:none !important; }
 }
+
+/* ===== Cue giver panel ===== */
+#cue-giver-view{ background:#0f1a23; border:2px solid #22d3ee; border-radius:12px; }
 #secret-color-display{
-  width:120px; height:48px;
-  margin-inline:auto;
-  border-radius:10px;
-  border:4px solid rgba(255,255,255,.3);
+  width:120px; height:48px; margin-inline:auto;
+  border-radius:10px; border:4px solid rgba(255,255,255,.3);
 }
-#secret-color-coords{
-  text-align:center;
-  font-weight:800;
-  color:#67e8f9;
-  margin-top:.25rem;
-}
+#secret-color-coords{ text-align:center; font-weight:800; color:#67e8f9; margin-top:.25rem; }
 
-/* Swatches candidatos */
-#candidate-swatches{
-  display:flex;
-  justify-content:center;
-  gap:14px;
-  margin:12px 0 8px;
-}
-.swatch{
-  width:72px; height:40px;
-  border-radius:12px;
-  border:3px solid rgba(255,255,255,.55);
-  box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.12);
-}
+/* Candidate swatches */
+#candidate-swatches{ display:flex; justify-content:center; gap:14px; margin:12px 0 8px; }
+.swatch{ width:72px; height:40px; border-radius:12px; border:3px solid rgba(255,255,255,.55); box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.12); }
 
-/* ========== Pistas mostradas ========= */
-#clue-display{
-  display:flex;
-  justify-content:center;
-  gap:.5rem;
-  flex-wrap:wrap;
-  margin-bottom:.75rem;
-}
-#clue-display span{
-  font-size:1.05rem;
-  font-weight:700;
-  background:#374151;
-  padding:.35rem .7rem;
-  border-radius:.5rem;
-  color:#f0f9ff;
-}
+/* ===== Clues shown ===== */
+#clue-display{ display:flex; justify-content:center; gap:.5rem; flex-wrap:wrap; margin-bottom:.75rem; }
+#clue-display span{ font-size:1.05rem; font-weight:700; background:#374151; padding:.35rem .7rem; border-radius:.5rem; color:#f0f9ff; }
 
-/* ========== Modales y celebración ========== */
-.modal-overlay{
-  position:fixed; inset:0; z-index:60;
-  background:rgba(0,0,0,.75);
-  display:flex; align-items:center; justify-content:center;
-  padding:1rem;
-}
-#confetti-canvas{
-  position:fixed; inset:0;
-  width:100%; height:100%;
-  pointer-events:none; z-index:80;
-}
+/* ===== Modals / celebration (restaurados) ===== */
+.modal-overlay{ position:fixed; inset:0; z-index:60; background:rgba(0,0,0,.75); display:flex; align-items:center; justify-content:center; padding:1rem; }
+#confetti-canvas{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:80; }
 .winner-text{ animation:bounce 1s ease-in-out; }
-@keyframes bounce{
-  0%,100%{ transform:translateY(0) }
-  50%{ transform:translateY(-10px) }
-}
+@keyframes bounce{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
 
-/* ========== Botón de sonido ========== */
+/* ===== Sound button ===== */
 .sound-toggle{
-  position:fixed; top:1rem; right:1rem;
-  width:40px; height:40px;
-  border-radius:9999px;
-  background:#374151;
-  border:2px solid #4b5563;
-  display:flex; align-items:center; justify-content:center;
-  color:#E0E0E0; z-index:1000; cursor:pointer;
+  position:fixed; top:1rem; right:1rem; width:40px; height:40px;
+  border-radius:9999px; background:#374151; border:2px solid #4b5563;
+  display:flex; align-items:center; justify-content:center; color:#E0E0E0; z-index:1000; cursor:pointer;
 }
 .sound-toggle svg{ width:22px; height:22px; }
 
-/* ========== Ajustes móviles ========== */
+/* ===== Mobile tweaks ===== */
 @media (max-width:1023px){
   .card{ padding:1.25rem; }
   #secret-color-display{ width:96px; height:40px; }
   .swatch{ width:64px; height:36px; }
 }
 
-/* ========== Utilidades ========== */
+/* ===== Small animations ===== */
 .fade-in{ animation:fadein .4s ease; }
-@keyframes fadein{
-  from{ opacity:0; transform:scale(.98) }
-  to{ opacity:1; transform:scale(1) }
-}
+@keyframes fadein{ from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
