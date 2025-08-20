@@ -1,41 +1,47 @@
-/* ============ Base ============ */
+/* =========================
+   Base / Tema
+   ========================= */
 :root{
   --bg:#121212;
   --panel:#1E1E1E;
-  --ink:#E0E0E0;
-  --cyan:#22d3ee;
   --border:#333;
+  --text:#E0E0E0;
+  --cyan:#22d3ee;
+  --cyan-700:#0891b2;
+  --muted:#374151;
 }
-
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
-  font-family:'Inter',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-  background:#121212;
-  color:var(--ink);
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background:var(--bg);
+  color:var(--text);
   display:flex;
   align-items:center;
   justify-content:center;
   min-height:100vh;
   padding:1rem;
-  touch-action:manipulation;
+  touch-action: manipulation;
 }
+.hidden{display:none !important}
 
+/* =========================
+   Cards, inputs, botones
+   ========================= */
 .card{
   background:var(--panel);
   padding:2rem;
-  border-radius:.75rem;
+  border-radius:12px;
   border:1px solid var(--border);
   box-shadow:0 10px 25px rgba(0,0,0,.3);
 }
-
 .input-field{
   width:100%;
   padding:.75rem 1rem;
   border:1px solid #444;
-  border-radius:.375rem;
+  border-radius:6px;
   background:#2a2a2a;
-  color:var(--ink);
+  color:var(--text);
   transition:border-color .2s, box-shadow .2s;
 }
 .input-field:focus{
@@ -43,270 +49,235 @@ body{
   border-color:var(--cyan);
   box-shadow:0 0 0 3px rgba(34,211,238,.2);
 }
-
 .btn-primary{
-  background:#0891b2;
+  background:var(--cyan-700);
   color:#fff;
   font-weight:700;
   padding:.8rem 1rem;
-  border-radius:.375rem;
+  border-radius:6px;
   border:none;
   cursor:pointer;
-  transition:filter .2s,transform .02s;
+  transition:filter .2s, transform .02s;
 }
-.btn-primary:hover{ filter:brightness(1.05) }
+.btn-primary:hover{ filter:brightness(.95) }
 .btn-primary:active{ transform:translateY(1px) }
-
 .btn-secondary{
-  background:#374151;
-  color:#fff;
-  font-weight:700;
-  padding:.8rem 1rem;
-  border-radius:.375rem;
-  border:none;
-  cursor:pointer;
-  transition:filter .2s,transform .02s;
+  background:#374151; color:#fff; font-weight:700;
+  padding:.8rem 1rem; border-radius:6px; border:none; cursor:pointer;
 }
-.btn-secondary:hover{ filter:brightness(1.06) }
+.btn-secondary:hover{ filter:brightness(1.05) }
 
-/* ============ Grid contenedor ============ */
+/* =========================
+   Sonido
+   ========================= */
+.sound-toggle{
+  position:fixed; top:1rem; right:1rem;
+  width:40px; height:40px; background:#374151; border-radius:999px;
+  display:flex; align-items:center; justify-content:center;
+  border:2px solid #4b5563; z-index:1000; cursor:pointer;
+}
+.sound-toggle svg{ width:24px; height:24px; color:#E0E0E0 }
+
+/* =========================
+   Paleta decorativa lobby
+   ========================= */
+.color-palette{ display:flex; justify-content:center; gap:.5rem }
+.palette-square{ width:2rem; height:2rem; border-radius:6px; border:2px solid #444 }
+
+/* =========================
+   Contenedor principal app
+   ========================= */
+#app-container{ width:100%; max-width:1280px; margin:0 auto }
+
+/* =========================
+   Tablero de colores (centrado y responsive)
+   ========================= */
+/* Contenedor relativo para overlays */
 #color-grid-container{
   position:relative;
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:1rem 0 0;
-  margin-inline:auto;
+  padding:0 1rem;
 }
 
-/* Tamaño general: centrado y grande para 30x16 en desktop */
-#color-grid{
+/* La malla */
+.color-grid{
   display:grid;
-  gap:1px;                 /* líneas de la cuadrícula */
-  background:#111;         /* color de líneas */
+  gap:1px;
   border:2px solid #444;
   border-radius:12px;
   overflow:hidden;
-  width:clamp(320px, 92vw, 1200px);   /* más grande en PC, responsive en móvil */
+  margin:0 auto;
+  /* width la manejamos por clases, las columnas por JS */
 }
 
-/* Las celdas son cuadrados perfectos */
+/* Tamaños (centrado y proporción agradable en PC y móvil) */
+.color-grid.grid-30x16{
+  /* ancho desde 720px hasta 1200px, o 90vw lo que sea menor/mayor según pantalla */
+  width:clamp(720px, 90vw, 1200px);
+}
+.color-grid.grid-12x8{
+  /* ancho desde 360px hasta 760px, ideal móvil y tablet */
+  width:clamp(360px, 92vw, 760px);
+}
+
+/* Las celdas conservan forma cuadrada */
 .color-cell{
   width:100%;
-  padding-bottom:100%;
+  padding-bottom:100%; /* cuadrado */
   position:relative;
   cursor:pointer;
-  transition:transform .06s ease-in-out;
+  transition:transform .08s ease;
 }
-.color-cell:hover{
-  transform:scale(1.04);
-  z-index:2;
-  border-radius:4px;
-}
-
-/* ============ Marcadores (jugadores) ============ */
-.player-marker{
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  display:flex; align-items:center; justify-content:center;
-  pointer-events:none;
-}
-
-/* Móvil: ficha circular con inicial */
-.player-marker{
-  width:60%;
-  height:60%;
-  border-radius:50%;
-  border:3px solid rgba(255,255,255,.9);
-  box-shadow:0 6px 14px rgba(0,0,0,.35);
-}
-.player-marker .initial{
-  font-size:14px;
-  font-weight:800;
-  color:#fff;
-  text-shadow:0 1px 2px rgba(0,0,0,.5);
-}
-
-/* Desktop (>=1024px): peón de ajedrez, proporción correcta */
-@media (min-width:1024px){
-  .player-marker{
-    width:70%;
-    height:70%;
-    border:none;
-    border-radius:0;
-    background:transparent !important;
-    box-shadow:none;
+@media (hover:hover){
+  .color-cell:hover{
+    transform:scale(1.12);
+    z-index:2;
+    border-radius:4px;
+    box-shadow:0 0 10px rgba(255,255,255,.35);
   }
-  .player-marker .initial{ display:none }
 }
 
-/* Pre-selección */
-.temp-marker{ filter:saturate(1.1) brightness(1.05) }
+/* =========================
+   Resaltado de color secreto (solo dador)
+   ========================= */
+.secret-color-highlight{
+  outline:3px solid #fff;
+  outline-offset:-3px;
+  animation:glow 1.6s ease-in-out infinite;
+}
+@keyframes glow{
+  0%{ box-shadow: inset 0 0 0 0 rgba(255,255,255,.0) }
+  50%{ box-shadow: inset 0 0 0 2px rgba(255,255,255,.35) }
+  100%{ box-shadow: inset 0 0 0 0 rgba(255,255,255,0) }
+}
 
-/* ============ Overlays de puntuación ============ */
+/* =========================
+   Overlays de puntuación
+   ========================= */
 .scoring-overlay{
   position:absolute;
   pointer-events:none;
   box-sizing:border-box;
-  border-style:dashed;
   border-radius:6px;
-  z-index:10;
+  border:3px dashed;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.35));
 }
+#scoring-box-1{ border-color:#ef4444 }  /* 5x5 (ROJO) */
+#scoring-box-2{ border-color:#facc15 }  /* 3x3 (AMARILLO) */
+#scoring-box-3{ border-color:#ffffff }  /* 1x1 (BLANCO) */
 
-#scoring-box-1{ border:3px dashed #ef4444; }  /* 5x5 (rojo) */
-#scoring-box-2{ border:3px dashed #facc15; }  /* 3x3 (amarillo) */
-#scoring-box-3{ border:3px dashed #ffffff; }  /* 1x1 (blanco) */
+.hidden{ display:none }
 
-/* ============ Resalto del color secreto (solo lo ve el dador) ============ */
-.secret-color-highlight{
-  outline:3px solid #fff;
-  outline-offset:-3px;
-  animation:blink 1.4s ease-in-out infinite;
-}
-@keyframes blink{
-  0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0) }
-  50%{ box-shadow:0 0 0 6px rgba(135,206,250,.25) }
-}
-
-/* ============ Panel del dador (elección + pista) ============ */
+/* =========================
+   Vista del dador: muestras + pista
+   ========================= */
 #cue-giver-view{
-  margin-bottom:1rem;
-  padding:1rem;
-  border:1px solid #2b9db0;
-  background:#17222b;
-  border-radius:.75rem;
+  background:#0f172a; border:1px solid rgba(34,211,238,.6);
+  border-radius:12px; padding:1rem 1rem 1.25rem; margin-bottom:1rem;
 }
-#cue-giver-title{
-  text-align:center;
-  font-weight:700;
-  margin-bottom:.5rem;
-  color:#d6dee5;
-}
+#cue-giver-title{ text-align:center; margin-bottom:.5rem }
 #secret-color-display{
-  width:120px; height:52px;
-  margin:.3rem auto .1rem auto;
-  border-radius:.5rem;
-  border:3px solid rgba(255,255,255,.25);
+  width:130px; height:52px; margin:.25rem auto .4rem;
+  border-radius:10px; border:3px solid rgba(255,255,255,.35);
+  background:transparent;
 }
 #secret-color-coords{
-  text-align:center;
-  font-weight:800;
-  color:#67e8f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-weight:800; text-align:center; color:#67e8f9; margin-bottom:.5rem
 }
-
-/* Muestras de 4 colores */
 #candidate-swatches{
-  display:flex;
-  gap:.75rem;
-  justify-content:center;
-  align-items:center;
-  margin-top:.6rem;
+  display:flex; gap:.75rem; justify-content:center; flex-wrap:wrap; margin:.5rem 0 .25rem;
 }
-.swatch{
-  width:66px; height:42px;
-  border-radius:12px;
-  border:3px solid rgba(255,255,255,.55);
-  box-shadow:0 6px 14px rgba(0,0,0,.25);
-  cursor:pointer;
-  transition:transform .12s, filter .12s;
+.swatch-btn{
+  width:64px; height:42px; border-radius:12px; border:3px solid rgba(255,255,255,.6);
+  box-shadow:0 4px 12px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,0,0,.15);
+  cursor:pointer; transition:transform .06s ease, box-shadow .2s;
 }
-.swatch:hover{ transform:translateY(-2px); filter:brightness(1.06) }
+.swatch-btn:active{ transform:translateY(1px) }
+#clue-form{
+  display:flex; gap:.5rem; justify-content:center; margin-top:.75rem;
+}
+#clue-input{ max-width:320px }
+#submit-clue-btn{ white-space:nowrap }
 
-/* Formulario de pista: input + botón a la derecha */
-#clue-form .clue-row{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:.5rem;
-  margin-top:.75rem;
-}
-#clue-form .clue-row .input-field{
-  max-width:280px;
+/* Cuando el formulario va en línea con el input (botón a la derecha) */
+.clue-inline{
+  display:flex; align-items:center; gap:.5rem;
 }
 
-/* ============ Tip & elementos varios ============ */
+/* =========================
+   Marcador "peón" del jugador (proporcional)
+   ========================= */
+.pawn-marker{
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+}
+.pawn-marker .pawn{
+  width:68%; height:auto; /* proporcional al tamaño de la celda */
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
+}
+.pawn-marker .pawn-initial{
+  position:absolute;
+  font-weight:900; font-size: clamp(10px, 2.2vw, 16px);
+  color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.6);
+}
+
+/* =========================
+   Clues mostradas sobre tablero
+   ========================= */
 #clue-display{
-  display:flex;
-  justify-content:center;
-  gap:.5rem;
-  min-height:2.75rem;
-  margin-bottom:.25rem;
+  display:flex; align-items:center; justify-content:center; gap:.5rem;
+  margin: .25rem 0 .5rem;
 }
 #clue-display span{
-  font-size:1rem;
-  font-weight:800;
-  background:#374151;
-  padding:.4rem .7rem;
-  border-radius:.5rem;
-  color:#f0f9ff;
+  font-size:1.25rem; font-weight:800;
+  background:#374151; color:#f0f9ff;
+  padding:.35rem .75rem; border-radius:.5rem;
 }
 
-.color-preview{
-  width:38px; height:38px;
-  border-radius:.375rem;
-  border:2px solid #6b7280;
-}
-
-/* Sonido */
-.sound-toggle{
-  position:fixed;
-  top:1rem; right:1rem;
-  width:40px; height:40px;
-  background:#374151;
-  border:2px solid #4b5563;
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; z-index:1000;
-}
-.sound-toggle svg{ width:24px; height:24px; color:#E0E0E0 }
-
-/* ============ Modales ============ */
+/* =========================
+   Modales / overlays
+   ========================= */
 .modal-overlay{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.75);
+  position:fixed; inset:0; background:rgba(0,0,0,.75);
   display:flex; align-items:center; justify-content:center;
   padding:1rem; z-index:50;
 }
+
+/* =========================
+   Game Over confetti
+   ========================= */
 #confetti-canvas{
-  position:fixed; inset:0;
-  width:100%; height:100%;
+  position:fixed; inset:0; width:100%; height:100%;
   pointer-events:none; z-index:100;
 }
+.winner-text{ animation:bounce 1s ease-in-out }
+@keyframes bounce{ 0%,100%{ transform:translateY(0)} 50%{ transform:translateY(-10px)} }
 
-/* ============ Responsive ajustes ============ */
+/* =========================
+   Panel lateral / títulos
+   ========================= */
+#game-title{ color:#67e8f9 }
+.fade-in{ animation:fadeIn .4s ease }
+@keyframes fadeIn{ from{opacity:0; transform:scale(.98)} to{opacity:1; transform:scale(1)} }
+
+/* =========================
+   Previsualización del color elegido (cuando se usa)
+   ========================= */
+.color-preview{ width:36px; height:36px; border-radius:6px; border:2px solid #6b7280 }
+
+/* =========================
+   Ajustes móviles
+   ========================= */
 @media (max-width:1023px){
   .card{ padding:1.25rem }
-  #color-grid{ width:92vw } /* móvil ocupa casi todo el ancho */
-  #cue-giver-view{ padding:1rem }
-  #secret-color-display{ width:110px; height:48px }
-  #candidate-swatches{ gap:.6rem }
-  .swatch{ width:56px; height:38px; border-radius:10px }
-}
+  #color-grid-container{ padding:0 .5rem }
+  .color-grid.grid-30x16{ width:clamp(320px, 94vw, 980px) }
+  .color-grid.grid-12x8{ width:clamp(320px, 94vw, 680px) }
 
-@media (min-width:1280px){
-  /* en desktop grande agrandamos aún más el 30x16 */
-  #color-grid{ width:min(92vw, 1280px) }
-}
-
-/* ============ Utilidades que ya usabas ============ */
-.fade-in{ animation:fadeIn .45s ease-in-out }
-@keyframes fadeIn{
-  from{opacity:0; transform:scale(.98)}
-  to{opacity:1; transform:scale(1)}
-}
-
-/* Paleta decorativa lobby */
-.color-palette{ display:flex; justify-content:center; gap:.5rem }
-.palette-square{
-  width:2rem; height:2rem;
-  border-radius:.375rem;
-  border:2px solid #444;
-}
-
-/* Título ganador */
-.winner-text{ animation:bounce 1s ease-in-out }
-@keyframes bounce{
-  0%,100%{ transform:translateY(0) }
-  50%{ transform:translateY(-10px) }
+  /* Mantener clues visibles arriba del tablero */
+  #clue-display{ margin-top:.25rem }
+  #cue-giver-view{ padding: .8rem }
+  #secret-color-display{ width:110px; height:46px }
 }
