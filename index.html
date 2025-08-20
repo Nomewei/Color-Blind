@@ -2,17 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Hue Hunt Online</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color Blind Online</title>
 
-  <!-- Tailwind solo para utilidades -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 
-  <!-- Fuentes y estilos -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css"/>
-
-  <!-- Librerías auxiliares -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
 </head>
@@ -21,75 +17,82 @@
   <div id="sound-toggle" class="sound-toggle"></div>
 
   <div id="app-container" class="w-full max-w-7xl mx-auto">
-    <!-- Pantalla Lobby -->
+    <!-- Pantalla lobby -->
     <div id="lobby-screen" class="card text-center fade-in">
       <div class="color-palette mb-6">
-        <div class="palette-square" style="background-color:#ef4444"></div>
-        <div class="palette-square" style="background-color:#f97316"></div>
-        <div class="palette-square" style="background-color:#eab308"></div>
-        <div class="palette-square" style="background-color:#22c55e"></div>
-        <div class="palette-square" style="background-color:#3b82f6"></div>
-        <div class="palette-square" style="background-color:#8b5cf6"></div>
-        <div class="palette-square" style="background-color:#d946ef"></div>
+        <div class="palette-square" style="background:#ef4444"></div>
+        <div class="palette-square" style="background:#f97316"></div>
+        <div class="palette-square" style="background:#eab308"></div>
+        <div class="palette-square" style="background:#22c55e"></div>
+        <div class="palette-square" style="background:#3b82f6"></div>
+        <div class="palette-square" style="background:#8b5cf6"></div>
+        <div class="palette-square" style="background:#d946ef"></div>
       </div>
 
-      <h1 class="text-4xl font-extrabold text-cyan-300 mb-2">Hue hunt</h1>
-      <p class="text-gray-400 mb-6">¡Un emocionante juego de Comunicación para adivinar colores!</p>
+      <h1 class="text-4xl font-extrabold text-cyan-300 mb-2">Color Blind</h1>
+      <p class="text-gray-400 mb-6">El juego de adivinar colores online</p>
 
       <div class="mb-4">
-        <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu Nombre</label>
-        <input type="text" id="player-name" class="input-field" placeholder="Ej: Ana"/>
+        <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu nombre</label>
+        <input id="player-name" class="input-field" type="text" placeholder="Ejemplo Ana" />
       </div>
 
-      <!-- Selector de tamaño de tablero -->
-      <div class="mb-4 grid grid-cols-2 gap-2">
-        <button id="size-30x16-btn" class="btn-secondary">Tablero 30 x 16</button>
-        <button id="size-12x8-btn" class="btn-secondary">Tablero 12 x 8</button>
-      </div>
+      <button id="create-game-btn" class="btn-primary w-full mb-3">Crear nueva partida</button>
 
-      <button id="create-game-btn" class="btn-primary w-full mb-3">Crear Nueva Partida</button>
-
-      <div class="flex items-center space-x-2">
-        <input type="text" id="join-game-id" class="input-field" placeholder="Código de la partida"/>
+      <div class="flex items-center gap-2">
+        <input id="join-game-id" class="input-field" type="text" placeholder="Código de la partida" />
         <button id="join-game-btn" class="btn-secondary">Unirse</button>
       </div>
+
       <p id="lobby-error" class="text-red-400 mt-4 h-4"></p>
     </div>
 
-    <!-- Pantalla Sala de Espera -->
+    <!-- Pantalla sala de espera -->
     <div id="waiting-room-screen" class="hidden card text-center fade-in">
-      <h2 class="text-2xl font-bold mb-4">Sala de Espera</h2>
-      <p class="text-gray-400 mb-2">Comparte este código con tus amigos:</p>
+      <h2 class="text-2xl font-bold mb-4">Sala de espera</h2>
+      <p class="text-gray-400 mb-2">Comparte este código</p>
       <div class="bg-gray-800 p-3 rounded-md mb-4 border border-gray-600">
         <p id="game-id-display" class="text-2xl font-mono font-bold tracking-widest cursor-pointer text-cyan-300" title="Click para copiar"></p>
       </div>
 
-      <h3 class="font-semibold mb-2">Jugadores Conectados</h3>
+      <h3 class="font-semibold mb-2">Jugadores conectados</h3>
       <ul id="player-list" class="text-left space-y-2 mb-6"></ul>
 
-      <!-- Condiciones de victoria -->
+      <!-- Opciones de partida del host -->
       <div id="game-options" class="mb-6 space-y-4 text-left">
-        <h3 class="font-semibold text-center mb-2">Condiciones de Victoria</h3>
+        <h3 class="font-semibold text-center mb-2">Condiciones y tablero</h3>
+
         <div class="flex items-center justify-between">
-          <label for="round-limit" class="text-gray-300">Límite de Rondas</label>
-          <input type="number" id="round-limit" class="input-field w-24 text-center" value="10" min="1" max="25"/>
+          <label for="round-limit" class="text-gray-300">Límite de rondas</label>
+          <input id="round-limit" class="input-field w-24 text-center" type="number" min="1" value="10" />
         </div>
+
         <div class="flex items-center justify-between">
-          <label for="score-limit" class="text-gray-300">Límite de Puntos</label>
-          <input type="number" id="score-limit" class="input-field w-24 text-center" value="25" min="1" max="25"/>
+          <label for="score-limit" class="text-gray-300">Límite de puntos</label>
+          <input id="score-limit" class="input-field w-24 text-center" type="number" min="1" value="25" />
         </div>
+
+        <div class="flex items-center justify-between">
+          <label for="grid-size-select" class="text-gray-300">Tamaño de cuadrícula</label>
+          <!-- Volvemos al selector correcto 30x16 o 12x8 -->
+          <select id="grid-size-select" class="input-field w-40">
+            <option value="30x16" selected>30 x 16</option>
+            <option value="12x8">12 x 8</option>
+          </select>
+        </div>
+
         <p id="game-limits-display" class="text-center text-cyan-400"></p>
       </div>
 
-      <button id="start-game-btn" class="btn-primary w-full">Empezar Partida</button>
-      <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al Inicio</button>
-      <p class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
+      <button id="start-game-btn" class="btn-primary w-full">Empezar partida</button>
+      <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al inicio</button>
+      <p class="text-xs text-gray-500 mt-2">Solo el creador puede empezar</p>
     </div>
 
-    <!-- Pantalla de Juego -->
+    <!-- Pantalla de juego -->
     <div id="game-screen" class="hidden w-full fade-in">
       <div class="flex flex-col lg:flex-row gap-6">
-        <!-- Columna izquierda -->
+        <!-- Lateral izquierdo -->
         <div class="lg:w-1/4 card flex flex-col order-2 lg:order-1">
           <h2 id="game-title" class="text-2xl font-bold mb-4 border-b border-gray-700 pb-2 text-cyan-300">Partida</h2>
           <div id="game-info" class="mb-4 space-y-3"></div>
@@ -99,41 +102,43 @@
             <div id="player-scores" class="space-y-2"></div>
           </div>
 
-          <button id="leave-game-btn" class="btn-secondary w-full mt-4">Volver al Inicio</button>
+          <button id="leave-game-btn" class="btn-secondary w-full mt-4">Volver al inicio</button>
         </div>
 
-        <!-- Columna derecha principal -->
+        <!-- Panel principal -->
         <div class="lg:w-3/4 card order-1 lg:order-2 flex flex-col">
-          <!-- Panel del dador -->
-          <div id="cue-giver-view" class="hidden text-center mb-4 p-4 rounded-lg bg-gray-800 border border-cyan-500">
-            <h3 id="cue-giver-title" class="text-xl font-bold mb-2">Tu color secreto</h3>
-            <div id="secret-color-display" class="w-24 h-12 mx-auto my-2 rounded-md border-2 border-gray-500"></div>
-            <p id="secret-color-coords" class="font-mono font-bold text-cyan-300"></p>
+          <!-- Vista del dador -->
+          <div id="cue-giver-view" class="hidden rounded-lg bg-[#17222b] border border-cyan-500 p-4 mb-4">
+            <p id="cue-giver-title" class="text-center font-bold mb-2">Es tu turno de elegir un color secreto</p>
+            <div id="secret-color-display" class="mx-auto my-2 rounded-md border-2 border-gray-500" style="width:120px;height:52px"></div>
+            <p id="secret-color-coords" class="font-mono font-bold text-cyan-300 text-center"></p>
 
-            <!-- 4 muestras para elegir el color secreto -->
-            <div id="candidate-swatches" class="candidate-swatches"></div>
+            <!-- 4 muestras candidatas -->
+            <div id="candidate-swatches" class="mt-3 flex justify-center items-center gap-3"></div>
 
-            <!-- Formulario de pistas -->
-            <form id="clue-form" class="mt-3 hidden" onsubmit="return false;">
+            <!-- Pista de 1 palabra, botón a la derecha -->
+            <form id="clue-form" class="hidden mt-3" onsubmit="return false">
               <div class="clue-row">
-                <input id="clue-input" class="input-field" type="text" placeholder="Pista de 1 palabra"/>
+                <input id="clue-input" class="input-field" maxlength="20" placeholder="Pista de 1 palabra" />
                 <button id="submit-clue-btn" class="btn-primary">Dar Pista 1</button>
               </div>
             </form>
           </div>
 
-          <!-- Pistas dadas -->
-          <div id="clue-display" class="text-center mb-4 min-h-[2.5rem] flex items-center justify-center gap-4"></div>
+          <!-- Pistas mostradas arriba del tablero -->
+          <div id="clue-display" class="text-center mb-2 h-12 flex items-center justify-center gap-2"></div>
 
           <!-- Tablero -->
-          <div id="color-grid-container" class="relative flex-grow">
+          <div id="color-grid-container">
             <div id="color-grid" class="color-grid"></div>
-            <!-- Overlays de puntuación -->
+
+            <!-- Marcos de puntuación -->
             <div id="scoring-box-3" class="scoring-overlay hidden"></div>
             <div id="scoring-box-2" class="scoring-overlay hidden"></div>
             <div id="scoring-box-1" class="scoring-overlay hidden"></div>
           </div>
 
+          <!-- Controles y mensajes de turno -->
           <div id="controls" class="mt-4 text-center"></div>
         </div>
       </div>
@@ -142,32 +147,32 @@
     <!-- Modal resumen de ronda -->
     <div id="round-summary-modal" class="hidden modal-overlay">
       <div class="card max-w-lg w-full text-center fade-in">
-        <h2 class="text-3xl font-bold mb-4 text-cyan-300" id="summary-title">Fin de la Ronda</h2>
+        <h2 id="summary-title" class="text-3xl font-bold mb-4 text-cyan-300">Fin de la ronda</h2>
         <div id="summary-content" class="space-y-2 mb-6"></div>
-        <button id="next-round-btn" class="btn-primary">Siguiente Ronda</button>
+        <button id="next-round-btn" class="btn-primary">Siguiente ronda</button>
       </div>
     </div>
 
-    <!-- Modal confirmación salir -->
+    <!-- Confirmación salir -->
     <div id="confirm-leave-modal" class="hidden modal-overlay">
       <div class="card max-w-sm w-full text-center fade-in">
         <h2 class="text-2xl font-bold mb-4">¿Seguro que quieres salir?</h2>
-        <p class="text-gray-400 mb-6">Tu progreso en esta partida se perderá.</p>
+        <p class="text-gray-400 mb-6">Tu progreso se perderá</p>
         <div class="flex justify-center gap-4">
           <button id="cancel-leave-btn" class="btn-secondary">Cancelar</button>
-          <button id="confirm-leave-btn" class="btn-primary bg-red-600 hover:bg-red-700">Sí, salir</button>
+          <button id="confirm-leave-btn" class="btn-primary" style="background:#ef4444">Sí salir</button>
         </div>
       </div>
     </div>
 
-    <!-- Modal fin de juego -->
+    <!-- Game over -->
     <div id="game-over-modal" class="hidden modal-overlay">
       <canvas id="confetti-canvas"></canvas>
       <div class="card max-w-md w-full text-center fade-in">
-        <h2 class="text-4xl font-bold mb-4 winner-text">¡Fin de la Partida!</h2>
+        <h2 class="text-4xl font-bold mb-4 winner-text">Fin de la partida</h2>
         <p class="text-xl text-gray-300 mb-2">El ganador es</p>
         <p id="winner-name" class="text-5xl font-bold text-cyan-300 mb-8"></p>
-        <button id="new-game-btn" class="btn-primary w-full">Jugar de Nuevo</button>
+        <button id="new-game-btn" class="btn-primary w-full">Jugar de nuevo</button>
       </div>
     </div>
   </div>
