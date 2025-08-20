@@ -1,17 +1,11 @@
-// =========================
-// Firebase SDK imports
-// =========================
+// Firebase SDK
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import {
-  getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, deleteDoc
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-import {
-  getAuth, signInAnonymously, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-// =========================
-// Firebase config (igual)
-// =========================
+/* =========================
+   CONFIGURACIÓN FIREBASE
+========================= */
 const firebaseConfig = {
   apiKey: "AIzaSyAL1RF5XAMknDUlwtDRjC2PByUabkMCDOA",
   authDomain: "color-blind-bca19.firebaseapp.com",
@@ -20,90 +14,38 @@ const firebaseConfig = {
   messagingSenderId: "876142955211",
   appId: "1:876142955211:web:e2e380a21e17d8e940694e"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const APP_ID = "hues-and-cues-online";
 
-// =========================
-// Estado global
-// =========================
+/* =========================
+   CONSTANTES Y ESTADO
+========================= */
 let currentUserId = null;
 let currentGameId = null;
 let unsubscribeGame = null;
 let temporaryGuess = null;
 
+const GRID_FULL = { cols: 30, rows: 16 }; // 30x16
+const GRID_SMALL = { cols: 12, rows: 8 }; // 12x8
+
+// letras A..P
+const COORD_LETTERS = "ABCDEFGHIJKLMNOP".split("");
+
+// límite de jugadores y puntos
 const MAX_PLAYERS = 10;
 const DEFAULT_SCORE_LIMIT = 25;
 
-// tamaños soportados
-const GRID_SIZES = {
-  "30x16": { cols: 30, rows: 16, key: "30x16" },
-  "12x8": { cols: 8, rows: 12, key: "12x8" } // F x C, 12 filas, 8 columnas
-};
-
-// letras coordenadas dinámicas
-const lettersForRows = (rows) => {
-  const arr = [];
-  for (let i = 0; i < rows; i++) arr.push(String.fromCharCode(65 + i)); // A..
-  return arr;
-};
-
-// colores jugadores
+// Colores jugadores (hasta 10)
 const playerColors = [
   "#E53E3E", "#DD6B20", "#D69E2E", "#38A169", "#3182CE",
   "#5A67D8", "#805AD5", "#D53F8C", "#718096", "#4A5568"
 ];
 
-// =========================
-// DOM
-// =========================
-const lobbyScreen = document.getElementById("lobby-screen");
-const waitingRoomScreen = document.getElementById("waiting-room-screen");
-const gameScreen = document.getElementById("game-screen");
-const colorGrid = document.getElementById("color-grid");
-const colorGridContainer = document.getElementById("color-grid-container");
-
-const roundSummaryModal = document.getElementById("round-summary-modal");
-const confirmLeaveModal = document.getElementById("confirm-leave-modal");
-const gameOverModal = document.getElementById("game-over-modal");
-
-const soundToggle = document.getElementById("sound-toggle");
-
-// zona dador
-const cueGiverView = document.getElementById("cue-giver-view");
-const cueGiverTitle = document.getElementById("cue-giver-title");
-const secretColorDisplay = document.getElementById("secret-color-display");
-const secretColorCoords = document.getElementById("secret-color-coords");
-const candidateSwatches = document.getElementById("candidate-swatches");
-const clueForm = document.getElementById("clue-form");
-const clueInput = document.getElementById("clue-input");
-
-// overlays puntuación
-const box1 = document.getElementById("scoring-box-1");
-const box2 = document.getElementById("scoring-box-2");
-const box3 = document.getElementById("scoring-box-3");
-
-// =========================
-// Audio simple
-// =========================
-let isMuted = true;
-const soundIcons = {
-  muted: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l-2.25 2.25M19.5 12l2.25-2.25M12.75 15l3-3m0 0-3-3m3 3H6.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>`,
-  unmuted: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51a2.25 2.25 0 0 1-2.188-1.75A9.01 9.01 0 0 1 2.25 12c0-.83.112-1.633.322-2.396A2.25 2.25 0 0 1 4.51 8.25H6.75Z"/></svg>`
-};
-soundToggle.innerHTML = soundIcons.muted;
-soundToggle.addEventListener("click", () => {
-  isMuted = !isMuted;
-  soundToggle.innerHTML = isMuted ? soundIcons.muted : soundIcons.unmuted;
-});
-const playClick = () => { if (!isMuted) new AudioContext().close(); };
-
-// =========================
-// Paleta 30x16 exacta (A..P)
-// =========================
-const PALETTE_30x16 = [
+// Paleta exacta 30x16 dada por el usuario (A..P, 30 columnas)
+// Para brevedad del comentario, está resumida aquí. No modificar el orden.
+const COLOR_TABLE = [
   // A
   ["#652F0D","#722C0F","#7D2913","#8A2717","#9E291B","#AA291D","#BA2C21","#D23124","#F03225","#FC3022","#FD3221","#FD3223","#FD312B","#FF3139","#FD3044","#F82F51","#F42E64","#F22975","#E72881","#E32D8D","#D43D91","#C74091","#BC4597","#B14594","#A74697","#984696","#904A97","#874997","#80499A","#764A9B"],
   // B
@@ -138,305 +80,307 @@ const PALETTE_30x16 = [
   ["#789A3B","#759E3E","#6B9A3F","#61963F","#549741","#479142","#3B8B42","#328842","#218243","#177A41","#0F793E","#0A7F42","#0C8847","#0E8E47","#109748","#159C4A","#23A048","#29A254","#31A55D","#36A764","#37A86E","#30A97B","#27AA87","#1FA995","#15AAA0","#0CA9AE","#0CACBE","#06ACCA","#03A8D8","#00A3E4"]
 ];
 
-// =========================
-// Utilidades paleta
-// =========================
-function getFullColor(r, c) {
-  return PALETTE_30x16[r][c]; // 0-based
+/* =========================
+   UTILIDADES DOM
+========================= */
+const $ = (id) => document.getElementById(id);
+const lobbyScreen = $("lobby-screen");
+const waitingRoomScreen = $("waiting-room-screen");
+const gameScreen = $("game-screen");
+const colorGrid = $("color-grid");
+const roundSummaryModal = $("round-summary-modal");
+const gameOverModal = $("game-over-modal");
+const confirmLeaveModal = $("confirm-leave-modal");
+const soundToggle = $("sound-toggle");
+
+function showScreen(name) {
+  lobbyScreen.classList.add("hidden");
+  waitingRoomScreen.classList.add("hidden");
+  gameScreen.classList.add("hidden");
+  $(`${name}-screen`).classList.remove("hidden");
 }
 
-function buildSubPalette(originRow, originCol, rows, cols) {
-  const arr = [];
-  for (let r = 0; r < rows; r++) {
-    const row = [];
-    for (let c = 0; c < cols; c++) {
-      row.push(getFullColor(originRow + r, originCol + c));
-    }
-    arr.push(row);
-  }
-  return arr;
-}
+/* =========================
+   AUDIO SIMPLE
+========================= */
+let isMuted = true;
+const clickSynth = new Tone.Synth({ oscillator: { type: "sine" } }).toDestination();
+clickSynth.volume.value = -10;
+const soundIcons = {
+  muted: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M12 4 7 8H4v8h3l5 4zM16 8l5 8"/></svg>`,
+  unmuted: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5"><path d="M12 4 7 8H4v8h3l5 4z"/><path d="M16 8a6 6 0 010 8M18 6a9 9 0 010 12"/></svg>`
+};
+function playClick() { if (!isMuted) clickSynth.triggerAttackRelease("C5","16n"); }
+soundToggle.onclick = () => {
+  Tone.start();
+  isMuted = !isMuted;
+  soundToggle.innerHTML = isMuted ? soundIcons.muted : soundIcons.unmuted;
+};
+soundToggle.innerHTML = soundIcons.muted;
 
-// =========================
-// Autenticación
-// =========================
+/* =========================
+   AUTENTICACIÓN
+========================= */
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    await signInAnonymously(auth);
-    return;
+  if (user) {
+    currentUserId = user.uid;
+    const last = JSON.parse(localStorage.getItem("hues-cues-game"));
+    if (last?.gameId && last?.userId) rejoinGame(last.gameId, last.userId);
+  } else {
+    try { await signInAnonymously(auth); } catch(e){ console.error(e); }
   }
-  currentUserId = user.uid;
-  const last = JSON.parse(localStorage.getItem("hues-cues-game"));
-  if (last?.gameId && last?.userId) rejoinGame(last.gameId, last.userId);
 });
 
-// =========================
-// Lobby y eventos básicos
-// =========================
-document.getElementById("create-game-btn").addEventListener("click", createGame);
-document.getElementById("join-game-btn").addEventListener("click", joinGame);
-document.getElementById("start-game-btn").addEventListener("click", startGame);
-document.getElementById("exit-lobby-btn").addEventListener("click", executeLeave);
-document.getElementById("leave-game-btn").addEventListener("click", () => confirmLeaveModal.classList.remove("hidden"));
-document.getElementById("cancel-leave-btn").addEventListener("click", () => confirmLeaveModal.classList.add("hidden"));
-document.getElementById("confirm-leave-btn").addEventListener("click", executeLeave);
-document.getElementById("new-game-btn").addEventListener("click", restartGame);
-document.getElementById("game-id-display").addEventListener("click", copyGameId);
+/* =========================
+   LOBBY
+========================= */
+$("create-game-btn").onclick = () => { playClick(); createGame(); };
+$("join-game-btn").onclick   = () => { playClick(); joinGame(); };
+$("start-game-btn").onclick  = () => { playClick(); startGame(); };
+$("exit-lobby-btn").onclick  = () => { playClick(); executeLeave(); };
+$("leave-game-btn").onclick  = () => { playClick(); confirmLeaveModal.classList.remove("hidden"); };
+$("cancel-leave-btn").onclick= () => { playClick(); confirmLeaveModal.classList.add("hidden"); };
+$("confirm-leave-btn").onclick = () => { playClick(); executeLeave(); };
+$("new-game-btn").onclick    = () => { playClick(); restartGame(); };
+$("next-round-btn").onclick  = () => { playClick(); gotoNextRound(); };
+$("game-id-display").onclick = () => {
+  navigator.clipboard.writeText($("game-id-display").textContent);
+};
 
-// settings
-document.getElementById("round-limit").addEventListener("change", (e) => updateGameSettings({ roundLimit: parseInt(e.target.value || "1") }));
-document.getElementById("score-limit").addEventListener("change", (e) => updateGameSettings({ scoreLimit: parseInt(e.target.value || "1") }));
-document.getElementById("grid-size-select").addEventListener("change", (e) => updateGameSettings({ gridSize: e.target.value }));
-
-// =========================
-// Crear, unirse, salir
-// =========================
 function getPlayerName() {
-  const n = document.getElementById("player-name").value.trim();
-  if (!n) {
-    document.getElementById("lobby-error").textContent = "Escribe tu nombre";
-    return null;
-  }
+  const n = $("player-name").value.trim();
+  if (!n) { $("lobby-error").textContent = "Por favor, introduce tu nombre."; return null; }
   return n;
 }
 
 async function createGame() {
-  const name = getPlayerName();
-  if (!name || !currentUserId) return;
+  const name = getPlayerName(); if (!name || !currentUserId) return;
 
-  const id = Math.random().toString(36).substring(2, 7).toUpperCase();
-  currentGameId = id;
+  const gameId = Math.random().toString(36).substring(2,7).toUpperCase();
+  currentGameId = gameId;
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
 
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, id);
-  const players = { [currentUserId]: { name, color: playerColors[0], score: 0, isHost: true } };
-
+  const newPlayer = { name, color: playerColors[0], score: 0, isHost: true };
   const gameData = {
     hostId: currentUserId,
-    players,
+    players: { [currentUserId]: newPlayer },
     playerOrder: [currentUserId],
     gameState: "waiting",
     gameSettings: {
       roundLimit: 10,
       scoreLimit: DEFAULT_SCORE_LIMIT,
-      gridSize: "30x16"
+      gridSize: "30x16" // por defecto
     },
     createdAt: new Date()
   };
 
   await setDoc(gameRef, gameData);
-  localStorage.setItem("hues-cues-game", JSON.stringify({ gameId: id, userId: currentUserId }));
-  subscribeToGame(id);
+  localStorage.setItem("hues-cues-game", JSON.stringify({ gameId, userId: currentUserId }));
+  subscribeToGame(gameId);
   showScreen("waiting-room");
 }
 
 async function joinGame() {
-  const name = getPlayerName();
-  if (!name || !currentUserId) return;
+  const name = getPlayerName(); if (!name || !currentUserId) return;
+  const gameId = $("join-game-id").value.trim().toUpperCase();
+  if (!gameId) { $("lobby-error").textContent = "Introduce un código."; return; }
 
-  const id = document.getElementById("join-game-id").value.trim().toUpperCase();
-  if (!id) {
-    document.getElementById("lobby-error").textContent = "Introduce un código";
-    return;
-  }
-
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, id);
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
   const snap = await getDoc(gameRef);
-  if (!snap.exists()) {
-    document.getElementById("lobby-error").textContent = "Partida no encontrada";
-    return;
-  }
-
+  if (!snap.exists()) { $("lobby-error").textContent = "Partida no encontrada."; return; }
   const data = snap.data();
-  const currentCount = Object.keys(data.players || {}).length;
-  if (currentCount >= MAX_PLAYERS) {
-    document.getElementById("lobby-error").textContent = "La partida está llena";
-    return;
-  }
+
+  if (Object.keys(data.players).length >= MAX_PLAYERS) { $("lobby-error").textContent = "La partida está llena."; return; }
 
   if (data.gameState !== "waiting") {
-    // Reingreso si ya estaba
-    const entry = Object.entries(data.players).find(([, p]) => p.name === name);
-    if (entry) {
-      const existingPlayerId = entry[0];
-      localStorage.setItem("hues-cues-game", JSON.stringify({ gameId: id, userId: existingPlayerId }));
-      rejoinGame(id, existingPlayerId);
+    const found = Object.entries(data.players).find(([id,p]) => p.name === name);
+    if (found) {
+      const existingId = found[0];
+      localStorage.setItem("hues-cues-game", JSON.stringify({ gameId, userId: existingId }));
+      rejoinGame(gameId, existingId);
       return;
     }
-    document.getElementById("lobby-error").textContent = "La partida ya comenzó";
+    $("lobby-error").textContent = "La partida ya ha comenzado.";
     return;
   }
 
-  const color = playerColors[currentCount];
-  const newPlayers = { ...data.players, [currentUserId]: { name, color, score: 0, isHost: false } };
-  const newOrder = [...data.playerOrder, currentUserId];
+  const newColor = playerColors[Object.keys(data.players).length];
+  const newPlayer = { name, color: newColor, score: 0, isHost: false };
 
-  await updateDoc(gameRef, { players: newPlayers, playerOrder: newOrder });
-  localStorage.setItem("hues-cues-game", JSON.stringify({ gameId: id, userId: currentUserId }));
-  currentGameId = id;
-  subscribeToGame(id);
+  await updateDoc(gameRef, {
+    players: { ...data.players, [currentUserId]: newPlayer },
+    playerOrder: [...data.playerOrder, currentUserId]
+  });
+
+  localStorage.setItem("hues-cues-game", JSON.stringify({ gameId, userId: currentUserId }));
+  currentGameId = gameId;
+  subscribeToGame(gameId);
   showScreen("waiting-room");
 }
 
-async function rejoinGame(id, userId) {
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, id);
+async function rejoinGame(gameId, userId) {
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
   const snap = await getDoc(gameRef);
-  if (!snap.exists()) {
+  if (snap.exists()) {
+    currentGameId = gameId;
+    currentUserId = userId;
+    subscribeToGame(gameId);
+  } else {
     localStorage.removeItem("hues-cues-game");
-    return;
   }
-  currentGameId = id;
-  currentUserId = userId;
-  subscribeToGame(id);
+}
+
+function subscribeToGame(gameId) {
+  if (unsubscribeGame) unsubscribeGame();
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, gameId);
+  unsubscribeGame = onSnapshot(gameRef, (d) => {
+    if (!d.exists()) { localStorage.removeItem("hues-cues-game"); alert("El anfitrión terminó la partida."); executeLeave(); return; }
+    updateUI(d.data());
+  });
 }
 
 async function executeLeave() {
   if (unsubscribeGame) unsubscribeGame();
-  if (currentGameId && currentUserId) {
+
+  if (currentGameId) {
     const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
     const snap = await getDoc(gameRef);
     if (snap.exists()) {
       const data = snap.data();
-      if (data.hostId === currentUserId) {
+      if (currentUserId === data.hostId) {
         await deleteDoc(gameRef);
       }
     }
   }
+
   localStorage.removeItem("hues-cues-game");
   currentGameId = null;
   confirmLeaveModal.classList.add("hidden");
   showScreen("lobby");
 }
 
-function copyGameId() {
-  const id = document.getElementById("game-id-display").textContent;
-  navigator.clipboard.writeText(id);
+/* =========================
+   TABLERO Y PALETA
+========================= */
+function getHexAt(y, x) { // y: 0..15, x: 0..29
+  return COLOR_TABLE[y][x];
 }
 
-// =========================
-// Suscripción y UI
-// =========================
-function subscribeToGame(id) {
-  if (unsubscribeGame) unsubscribeGame();
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, id);
-  unsubscribeGame = onSnapshot(gameRef, (snap) => {
-    if (!snap.exists()) {
-      localStorage.removeItem("hues-cues-game");
-      alert("El anfitrión terminó la partida");
-      showScreen("lobby");
-      return;
+function gridSpecFromSetting(setting) {
+  return setting === "12x8" ? GRID_SMALL : GRID_FULL;
+}
+
+function buildGrid(gameData) {
+  const setting = gameData.gameSettings?.gridSize || "30x16";
+  const spec = gridSpecFromSetting(setting);
+
+  // Si hay recorte (12x8), vendrá guardado en currentCrop {rowStart, colStart}
+  const crop = gameData.currentCrop || { rowStart: 0, colStart: 0 };
+
+  colorGrid.innerHTML = "";
+  colorGrid.style.setProperty("--grid-cols", spec.cols);
+  colorGrid.style.gridTemplateColumns = `repeat(${spec.cols}, 1fr)`;
+
+  for (let vy = 0; vy < spec.rows; vy++) {
+    for (let vx = 0; vx < spec.cols; vx++) {
+      const realY = crop.rowStart + vy;
+      const realX = crop.colStart + vx;
+
+      const hex = getHexAt(realY, realX);
+      const cell = document.createElement("div");
+      cell.className = "color-cell";
+      cell.style.backgroundColor = hex;
+
+      // guardamos coords reales para puntuación
+      cell.dataset.x = realX;
+      cell.dataset.y = realY;
+      cell.dataset.coords = `${COORD_LETTERS[realY]}${realX + 1}`;
+      cell.title = cell.dataset.coords;
+
+      colorGrid.appendChild(cell);
     }
-    const data = snap.data();
-    updateUI(data);
-  });
+  }
 }
 
-function showScreen(name) {
-  lobbyScreen.classList.add("hidden");
-  waitingRoomScreen.classList.add("hidden");
-  gameScreen.classList.add("hidden");
-  document.getElementById(`${name}-screen`).classList.remove("hidden");
-}
-
-function updateUI(data) {
-  if (data.gameState === "waiting") {
-    // sala de espera
+/* =========================
+   UI PRINCIPAL
+========================= */
+function updateUI(gameData) {
+  const inWaiting = gameData.gameState === "waiting";
+  if (inWaiting) {
     showScreen("waiting-room");
-    document.getElementById("game-id-display").textContent = currentGameId;
+    $("game-id-display").textContent = currentGameId;
 
-    const ul = document.getElementById("player-list");
-    ul.innerHTML = "";
-    data.playerOrder.forEach((pid) => {
-      const p = data.players[pid];
+    const list = $("player-list");
+    list.innerHTML = "";
+    gameData.playerOrder.forEach(pid => {
+      const p = gameData.players[pid];
       const li = document.createElement("li");
       li.className = "flex items-center";
-      li.innerHTML = `<div class="w-4 h-4 rounded-full mr-2 border border-gray-400" style="background:${p.color}"></div>${p.name}${p.isHost ? " (Host)" : ""}`;
-      ul.appendChild(li);
+      li.innerHTML = `<div class="w-4 h-4 rounded-full mr-2 border border-gray-400" style="background:${p.color}"></div>${p.name}${p.isHost ? " (Host)":""}`;
+      list.appendChild(li);
     });
 
-    const isHost = data.hostId === currentUserId;
-    const opts = document.getElementById("game-options");
-    const limits = document.getElementById("game-limits-display");
-    const roundInput = document.getElementById("round-limit");
-    const scoreInput = document.getElementById("score-limit");
-    const gridSelect = document.getElementById("grid-size-select");
+    // opciones host
+    const isHost = gameData.hostId === currentUserId;
+    $("game-options").classList.toggle("hidden", !isHost);
+    $("start-game-btn").style.display = isHost ? "block" : "none";
 
     if (isHost) {
-      opts.classList.remove("hidden");
-      limits.classList.add("hidden");
-      roundInput.value = data.gameSettings.roundLimit;
-      scoreInput.value = data.gameSettings.scoreLimit;
-      gridSelect.value = data.gameSettings.gridSize || "30x16";
-      document.getElementById("start-game-btn").style.display = "block";
+      $("round-limit").value = gameData.gameSettings.roundLimit;
+      $("score-limit").value = gameData.gameSettings.scoreLimit;
+      $("grid-size-select").value = gameData.gameSettings.gridSize || "30x16";
+      $("game-limits-display").classList.add("hidden");
     } else {
-      opts.classList.add("hidden");
+      const limits = $("game-limits-display");
+      limits.textContent = `Jugar a ${gameData.gameSettings.roundLimit} rondas o ${gameData.gameSettings.scoreLimit} puntos.`;
       limits.classList.remove("hidden");
-      limits.textContent = `Se jugará a ${data.gameSettings.roundLimit} rondas o ${data.gameSettings.scoreLimit} puntos.`;
-      document.getElementById("start-game-btn").style.display = "none";
     }
     return;
   }
 
+  // En partida
   showScreen("game");
-  renderScores(data);
-  renderBoard(data);
-  renderGameInfo(data);
-  renderControls(data);
+  renderHeader(gameData);
+  buildGrid(gameData);
+  renderBoard(gameData);
+  renderControls(gameData);
 }
 
-// =========================
-// Empezar partida y settings
-// =========================
-async function updateGameSettings(newSettings) {
-  if (!currentGameId) return;
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
-  const snap = await getDoc(gameRef);
-  if (!snap.exists()) return;
-  const data = snap.data();
-  await updateDoc(gameRef, { gameSettings: { ...data.gameSettings, ...newSettings } });
-}
+function renderHeader(gameData) {
+  const title = $("game-title");
+  const names = gameData.playerOrder.map(pid => gameData.players[pid].name);
+  title.textContent = names.length === 2 ? `${names[0]} vs ${names[1]}` : "Partida Grupal";
 
-async function startGame() {
-  if (!currentGameId) return;
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
-  const snap = await getDoc(gameRef);
-  const data = snap.data();
+  // info
+  const info = $("game-info");
+  const cueId = gameData.playerOrder[gameData.currentPlayerIndex];
+  const cue = gameData.players[cueId];
+  let html = `<p><strong>Ronda:</strong> ${gameData.currentRound} / ${gameData.gameSettings.roundLimit}</p>`;
+  html += `<p><strong>Dador de pista:</strong> ${cue.name}</p>`;
 
-  if (data.hostId !== currentUserId) {
-    alert("Solo el anfitrión puede empezar");
-    return;
+  if (gameData.gameState.includes("giving_clue")) {
+    html += `<p class="text-cyan-400 font-semibold">Esperando pista de ${cue.name}...</p>`;
+  } else if (gameData.gameState.includes("guessing")) {
+    const required = gameData.gameState === "guessing_1" ? 1 : 2;
+    const need = gameData.playerOrder
+      .filter(id => id !== cueId)
+      .filter(id => (gameData.guesses?.[id]?.length || 0) < required)
+      .map(id => gameData.players[id].name);
+    html += need.length
+      ? `<p class="text-yellow-400 font-semibold">Turno de adivinar de:<br>${need.join(", ")}</p>`
+      : `<p class="text-gray-400 font-semibold">Todos han adivinado.</p>`;
+  } else if (gameData.gameState === "scoring") {
+    html += `<p class="text-green-400 font-semibold">Puntuando...</p>`;
   }
 
-  // grid config
-  const gs = data.gameSettings.gridSize || "30x16";
-  const { rows, cols } = GRID_SIZES[gs];
+  // puntuaciones
+  info.innerHTML = html;
 
-  let originRow = 0, originCol = 0;
-  if (gs === "12x8") {
-    originRow = Math.floor(Math.random() * (16 - rows + 1)); // 0..4
-    originCol = Math.floor(Math.random() * (30 - cols + 1)); // 0..22
-  }
-
-  const gridConfig = { size: gs, rows, cols, originRow, originCol };
-
-  await updateDoc(gameRef, {
-    gameState: "choose_secret",
-    currentRound: 1,
-    currentPlayerIndex: 0,
-    gridConfig,
-    currentCard: null,
-    clues: [],
-    guesses: {}
-  });
-}
-
-// =========================
-// Render lateral y tablero
-// =========================
-function renderScores(data) {
-  const container = document.getElementById("player-scores");
-  container.innerHTML = "";
-  data.playerOrder.forEach((pid) => {
-    const p = data.players[pid];
+  const scores = $("player-scores");
+  scores.innerHTML = "";
+  gameData.playerOrder.forEach(pid => {
+    const p = gameData.players[pid];
     const row = document.createElement("div");
     row.className = "flex justify-between items-center p-2 rounded-md";
     row.innerHTML = `
@@ -444,107 +388,105 @@ function renderScores(data) {
         <div class="w-5 h-5 rounded-full mr-3 border border-gray-400" style="background:${p.color}"></div>
         <span class="font-medium">${p.name}</span>
       </div>
-      <span class="font-bold text-lg">${p.score}</span>
-    `;
-    container.appendChild(row);
+      <span class="font-bold text-lg">${p.score}</span>`;
+    scores.appendChild(row);
   });
-}
 
-function currentLetters(data) {
-  const rows = data.gridConfig?.rows || 16;
-  return lettersForRows(rows);
-}
+  // vista dador (cuadro superior)
+  const cueView = $("cue-giver-view");
+  const cueGiverId = gameData.playerOrder[gameData.currentPlayerIndex];
+  const isCue = currentUserId === cueGiverId && gameData.gameState !== "scoring" && gameData.gameState !== "roundSummary" && gameData.gameState !== "gameOver";
 
-function gridPalette(data) {
-  const cfg = data.gridConfig || { size: "30x16", rows: 16, cols: 30, originRow: 0, originCol: 0 };
-  if (cfg.size === "30x16") return PALETTE_30x16;
-  // 12x8 subpaleta
-  return buildSubPalette(cfg.originRow, cfg.originCol, cfg.rows, cfg.cols);
-}
+  if (isCue) {
+    cueView.classList.remove("hidden");
+    const disp = $("secret-color-display");
+    const coords = $("secret-color-coords");
 
-function generateColorGrid(data) {
-  const cfg = data.gridConfig || { size: "30x16", rows: 16, cols: 30, originRow: 0, originCol: 0 };
-  colorGrid.innerHTML = "";
-
-  // clases de tamaño para centrar y escalar vía CSS
-  colorGrid.classList.remove("grid-30x16", "grid-12x8");
-  colorGrid.classList.add(cfg.size === "30x16" ? "grid-30x16" : "grid-12x8");
-
-  colorGrid.style.gridTemplateColumns = `repeat(${cfg.cols}, 1fr)`;
-
-  const pal = gridPalette(data);
-  const letters = currentLetters(data);
-
-  for (let r = 0; r < cfg.rows; r++) {
-    for (let c = 0; c < cfg.cols; c++) {
-      const cell = document.createElement("div");
-      cell.className = "color-cell";
-      const hex = pal[r][c];
-      cell.style.backgroundColor = hex;
-      cell.dataset.x = c;
-      cell.dataset.y = r;
-      cell.dataset.coords = `${letters[r]}${c + 1}`;
-      cell.title = cell.dataset.coords;
-      colorGrid.appendChild(cell);
+    if (gameData.currentCard) {
+      disp.style.background = gameData.currentCard.color;
+      coords.textContent = `${COORD_LETTERS[gameData.currentCard.y]}${gameData.currentCard.x+1}`;
+    } else {
+      disp.style.background = "transparent";
+      coords.textContent = "";
     }
+
+    // cambiar texto botón pista según estado
+    setClueButtonLabel(gameData.gameState);
+  } else {
+    cueView.classList.add("hidden");
   }
+
+  // pistas mostradas
+  $("clue-display").innerHTML = (gameData.clues || []).map(c => `<span>${c}</span>`).join("");
 }
 
-function renderBoard(data) {
-  // limpiar marcadores y overlays
-  document.querySelectorAll(".pawn-marker,.secret-color-highlight").forEach(el => el.remove());
-  [box1, box2, box3].forEach(b => b.classList.add("hidden"));
+function setClueButtonLabel(state) {
+  const btn = $("submit-clue-btn");
+  if (!btn) return;
+  btn.textContent = state === "giving_clue_2" ? "Dar Pista 2" : "Dar Pista 1";
+}
 
-  generateColorGrid(data);
+function renderBoard(gameData) {
+  // limpiar marcadores y resaltados previos
+  document.querySelectorAll(".player-marker, .temp-marker, .secret-color-highlight, .pawn-marker").forEach(el => el.remove());
+  document.querySelectorAll(".scoring-overlay").forEach(el => el.classList.add("hidden"));
 
-  const cfg = data.gridConfig || { rows: 16, cols: 30, size: "30x16" };
-  const cueGiverId = data.playerOrder[data.currentPlayerIndex];
-  const isCueGiver = currentUserId === cueGiverId;
+  const cueId = gameData.playerOrder[gameData.currentPlayerIndex];
+  const isCue = currentUserId === cueId;
 
-  // resaltar secreto solo al dador
-  if (isCueGiver && data.currentCard && (data.gameState !== "scoring")) {
-    const { x, y } = data.currentCard;
+  // resaltar color secreto al dador
+  if (isCue && gameData.currentCard && (gameData.gameState !== "scoring")) {
+    const { x, y } = gameData.currentCard;
     const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
     if (cell) cell.classList.add("secret-color-highlight");
   }
 
-  // dibujar peones en las elecciones visibles
-  const drawPawn = (guess, player) => {
+  // función para pintar marcador según dispositivo
+  const isMobile = window.matchMedia("(max-width: 1023px)").matches;
+  const drawMarker = (guess, player, isTemp = false) => {
     const cell = colorGrid.querySelector(`[data-x='${guess.x}'][data-y='${guess.y}']`);
     if (!cell) return;
-    const pawn = document.createElement("div");
-    pawn.className = "pawn-marker";
-    pawn.innerHTML = `
-      <svg viewBox="0 0 64 64" class="pawn">
-        <circle cx="32" cy="20" r="10" fill="${player.color}" stroke="white" stroke-width="3"/>
-        <path d="M22 34h20c6 0 6 8 0 8H22c-6 0-6-8 0-8z" fill="${player.color}" stroke="white" stroke-width="3"/>
-        <path d="M16 52h32v6H16z" fill="${player.color}" stroke="white" stroke-width="2"/>
-        <circle cx="32" cy="20" r="10" fill="transparent" stroke="rgba(255,255,255,.6)" stroke-width="2"/>
-      </svg>
-      <span class="pawn-initial">${player.name.substring(0,1).toUpperCase()}</span>
-    `;
-    cell.appendChild(pawn);
+    let marker;
+    if (isMobile) {
+      marker = document.createElement("div");
+      marker.className = isTemp ? "player-marker temp-marker" : "player-marker";
+      marker.style.backgroundColor = player.color;
+      marker.textContent = player.name.substring(0,1).toUpperCase();
+    } else {
+      marker = document.createElement("div");
+      marker.className = "pawn-marker";
+      marker.innerHTML = `
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle cx="32" cy="20" r="10" fill="${player.color}"></circle>
+          <path d="M16 52h32c0-10-6-16-16-16s-16 6-16 16z" fill="${player.color}"></path>
+          <ellipse cx="32" cy="56" rx="18" ry="4" fill="#ffffff" opacity="0.25"></ellipse>
+        </svg>`;
+    }
+    cell.appendChild(marker);
   };
 
-  if (data.guesses) {
-    const showAll = (data.gameState === "scoring") || (data.gameState === "roundSummary") || (data.gameState === "gameOver") || isCueGiver;
-    if (showAll) {
-      Object.entries(data.guesses).forEach(([pid, arr]) => {
-        const p = data.players[pid];
-        arr.forEach(g => drawPawn(g, p));
+  // mostrar adivinanzas
+  if (gameData.guesses) {
+    if (gameData.gameState === "scoring" || gameData.gameState === "gameOver" || gameData.gameState === "roundSummary" || isCue) {
+      Object.entries(gameData.guesses).forEach(([pid, guesses]) => {
+        const p = gameData.players[pid];
+        guesses.forEach(g => drawMarker(g, p, false));
       });
     } else {
-      const me = data.players[currentUserId];
-      (data.guesses[currentUserId] || []).forEach(g => drawPawn(g, me));
+      const mine = gameData.guesses[currentUserId] || [];
+      const me = gameData.players[currentUserId];
+      mine.forEach(g => drawMarker(g, me, false));
     }
   }
 
-  // overlays puntuación si estamos en scoring
-  if (data.gameState === "scoring" || data.gameState === "roundSummary" || data.gameState === "gameOver") {
-    if (!data.currentCard) return;
-    const { x, y } = data.currentCard;
+  if (temporaryGuess) {
+    const me = gameData.players[currentUserId];
+    drawMarker(temporaryGuess, me, true);
+  }
 
-    // medidas
+  // overlys de puntuación durante "scoring"
+  if (gameData.gameState === "scoring" || gameData.gameState === "roundSummary" || gameData.gameState === "gameOver") {
+    const { x, y } = gameData.currentCard;
     const cell = colorGrid.querySelector(`[data-x='${x}'][data-y='${y}']`);
     if (!cell) return;
 
@@ -553,187 +495,66 @@ function renderBoard(data) {
     const cellW = rect.width, cellH = rect.height;
     const gap = 1;
 
-    const placeBox = (size, el) => {
-      if (!el) return;
-      el.style.left = `${(gridRect.left - gridRect.left) + (x - Math.floor(size/2)) * (cellW + gap)}px`;
-      el.style.top = `${(gridRect.top - gridRect.top) + (y - Math.floor(size/2)) * (cellH + gap)}px`;
-      el.style.width = `${size * (cellW + gap) - gap}px`;
-      el.style.height = `${size * (cellH + gap) - gap}px`;
-      el.classList.remove("hidden");
-    };
-
-    if (cfg.size === "12x8") {
-      // solo 3x3
-      placeBox(3, box2);
-    } else {
-      placeBox(1, box3);
-      placeBox(3, box2);
-      placeBox(5, box1);
+    function drawBox(size, id, show=true) {
+      const box = $(id); if (!box) return;
+      if (!show) { box.classList.add("hidden"); return; }
+      const left = (x - Math.floor(size/2)) * (cellW + gap);
+      const top  = (y - Math.floor(size/2)) * (cellH + gap);
+      box.style.left = `${left}px`;
+      box.style.top = `${top}px`;
+      box.style.width = `${size * (cellW + gap) - gap}px`;
+      box.style.height = `${size * (cellH + gap) - gap}px`;
+      box.classList.remove("hidden");
     }
+
+    const small = (gameData.gameSettings.gridSize === "12x8");
+    // Para 12x8 dejamos solo la amarilla 3x3
+    drawBox(1, "scoring-box-3", !small); // blanco
+    drawBox(3, "scoring-box-2", true);   // amarillo
+    drawBox(5, "scoring-box-1", !small); // rojo
   }
 }
 
-function renderGameInfo(data) {
-  const info = document.getElementById("game-info");
-  const giverId = data.playerOrder[data.currentPlayerIndex];
-  const giver = data.players[giverId];
-  const limits = data.gameSettings;
+function renderControls(gameData) {
+  const controls = $("controls");
+  controls.innerHTML = "";
 
-  let html = `<p><strong>Ronda:</strong> ${data.currentRound} / ${limits.roundLimit}</p>`;
-  html += `<p><strong>Dador de pista:</strong> ${giver.name}</p>`;
-  if (data.gameState === "choose_secret") {
-    html += `<p class="text-cyan-400 font-semibold">El dador está eligiendo el color secreto</p>`;
-  } else if (data.gameState.startsWith("giving_clue")) {
-    html += `<p class="text-cyan-400 font-semibold">Esperando la pista del dador…</p>`;
-  } else if (data.gameState.startsWith("guessing")) {
-    const required = data.gameState === "guessing_1" ? 1 : 2;
-    const pending = data.playerOrder
-      .filter(pid => pid !== giverId)
-      .filter(pid => (data.guesses[pid]?.length || 0) < required)
-      .map(pid => data.players[pid].name);
-    if (pending.length) {
-      html += `<p class="text-yellow-400 font-semibold">Turno de: ${pending.join(", ")}</p>`;
-    } else {
-      html += `<p class="text-gray-400">Todos han elegido</p>`;
-    }
-  } else if (data.gameState === "scoring") {
-    html += `<p class="text-green-400 font-semibold">Puntuando…</p>`;
-  }
-  info.innerHTML = html;
+  const cueId = gameData.playerOrder[gameData.currentPlayerIndex];
+  const isCue = currentUserId === cueId;
 
-  // clues arriba del tablero
-  document.getElementById("clue-display").innerHTML =
-    (data.clues || []).map((c) => `<span>${c}</span>`).join("");
-
-  // Vista del dador, muestras y pista
-  const isGiver = currentUserId === giverId;
-  if (isGiver && data.gameState !== "scoring" && data.gameState !== "roundSummary" && data.gameState !== "gameOver") {
-    cueGiverView.classList.remove("hidden");
-    if (data.currentCard) {
-      secretColorDisplay.style.background = data.currentCard.color;
-      secretColorCoords.textContent = `${currentLetters(data)[data.currentCard.y]}${data.currentCard.x + 1}`;
-    } else {
-      secretColorDisplay.style.background = "transparent";
-      secretColorCoords.textContent = "";
-    }
-
-    if (data.gameState === "choose_secret") {
-      clueForm.classList.add("hidden");
-      renderCandidateSwatches(data);
-    } else {
-      candidateSwatches.innerHTML = "";
-      clueForm.classList.remove("hidden");
+  // Vista dador: ya la manejamos en encabezado, aquí solo gestionamos eventos del formulario
+  if (isCue) {
+    const btn = $("submit-clue-btn");
+    if (btn) {
+      btn.onclick = () => submitClue(gameData.gameState === "giving_clue_1" ? 1 : 2);
+      setClueButtonLabel(gameData.gameState);
     }
   } else {
-    cueGiverView.classList.add("hidden");
-  }
-}
+    // jugador normal
+    const myGuesses = gameData.guesses?.[currentUserId] || [];
+    const canGuessNow = (gameData.gameState === "guessing_1" && myGuesses.length === 0) ||
+                        (gameData.gameState === "guessing_2" && myGuesses.length === 1);
 
-function renderControls(data) {
-  const container = document.getElementById("controls");
-  container.innerHTML = "";
-  const giverId = data.playerOrder[data.currentPlayerIndex];
-  const isGiver = currentUserId === giverId;
-
-  if (isGiver) {
-    if (data.gameState === "guessing_1" || data.gameState === "guessing_2") {
-      // botón Revelar si todos eligieron
-      const guessers = data.playerOrder.filter(id => id !== giverId);
-      const req = data.gameState === "guessing_1" ? 1 : 2;
-      const all = guessers.every(id => (data.guesses[id]?.length || 0) >= req);
-      if (all) {
-        const btn = document.createElement("button");
-        btn.className = "btn-primary";
-        btn.textContent = "Revelar color";
-        btn.onclick = reveal;
-        container.appendChild(btn);
-      } else {
-        container.innerHTML = `<p class="text-gray-400">Esperando que los demás elijan…</p>`;
-      }
-    } else if (data.gameState === "choose_secret") {
-      container.innerHTML = `<p class="text-gray-400">Elige una de las 4 muestras para definir el color secreto.</p>`;
-    }
-  } else {
-    // jugadores no dadores
-    if (data.gameState.startsWith("guessing")) {
-      container.innerHTML = `<p class="text-gray-300">Selecciona un color en el tablero.</p>`;
-    } else if (data.gameState === "choose_secret") {
-      container.innerHTML = `<p class="text-gray-400">El dador está eligiendo el color secreto…</p>`;
+    if (temporaryGuess) {
+      const tempColor = colorGrid.querySelector(`[data-x='${temporaryGuess.x}'][data-y='${temporaryGuess.y}']`)?.style?.backgroundColor || "";
+      controls.innerHTML = `
+        <div class="flex items-center justify-center gap-4">
+          <div class="color-preview" style="background:${tempColor}"></div>
+          <button id="confirm-guess-btn" class="btn-primary">Confirmar elección</button>
+        </div>`;
+      $("confirm-guess-btn").onclick = confirmGuess;
+    } else if (canGuessNow) {
+      controls.innerHTML = `<p class="text-gray-300">Selecciona un color en el tablero.</p>`;
     } else {
-      container.innerHTML = `<p class="text-gray-400">Espera tu turno o la siguiente pista.</p>`;
+      controls.innerHTML = `<p class="text-gray-500">Espera tu turno o la siguiente pista.</p>`;
     }
   }
 }
 
-// =========================
-// Muestras aleatorias para el dador
-// =========================
-function renderCandidateSwatches(data) {
-  const cfg = data.gridConfig;
-  const pal = gridPalette(data);
-  const picks = new Set();
-  while (picks.size < 4) {
-    const r = Math.floor(Math.random() * cfg.rows);
-    const c = Math.floor(Math.random() * cfg.cols);
-    picks.add(`${r},${c}`);
-  }
-  candidateSwatches.innerHTML = "";
-  picks.forEach((key) => {
-    const [r, c] = key.split(",").map(Number);
-    const hex = pal[r][c];
-    const btn = document.createElement("button");
-    btn.className = "swatch-btn";
-    btn.style.background = hex;
-    btn.title = `${currentLetters(data)[r]}${c + 1}`;
-    btn.addEventListener("click", async () => {
-      // fijar color secreto y pasar a dar pista
-      const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
-      await updateDoc(gameRef, {
-        currentCard: { x: c, y: r, color: hex },
-        gameState: "giving_clue_1"
-      });
-    });
-    candidateSwatches.appendChild(btn);
-  });
-}
-
-// =========================
-/* Pistas */
-// =========================
-const FORBIDDEN_WORDS = [
-  "rojo","verde","azul","amarillo","naranja","morado","violeta","rosa","marrón",
-  "negro","blanco","gris","cian","magenta","turquesa","lila","fucsia","celeste",
-  "índigo","añil","purpura","escarlata","carmín","granate","oliva","esmeralda",
-  "zafiro","cobalto","ocre","siena","beis","beige","crema","dorado","plateado",
-  "bronce","cobre","color","tono","matiz","claro","oscuro","brillante","pálido",
-  "aguamarina","coral","lavanda","malva","salmón","terracota","caqui"
-];
-
-document.getElementById("submit-clue-btn")?.addEventListener("click", submitClue);
-
-async function submitClue() {
-  const text = clueInput.value.trim();
-  if (!text) return;
-  const word = text.split(" ")[0].toLowerCase();
-  if (FORBIDDEN_WORDS.includes(word)) {
-    alert(`La palabra "${word}" no está permitida`);
-    return;
-  }
-  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
-  const snap = await getDoc(gameRef);
-  if (!snap.exists()) return;
-  const data = snap.data();
-  const clues = [...(data.clues || []), word];
-  await updateDoc(gameRef, { clues, gameState: "guessing_1" });
-  clueInput.value = "";
-}
-
-// =========================
-// Click en tablero (elegir color)
-// =========================
-colorGrid.addEventListener("click", handleGridClick);
-
-async function handleGridClick(e) {
+/* =========================
+   INTERACCIÓN TABLERO
+========================= */
+colorGrid.addEventListener("click", async (e) => {
   const cell = e.target.closest(".color-cell");
   if (!cell) return;
 
@@ -742,33 +563,178 @@ async function handleGridClick(e) {
   if (!snap.exists()) return;
   const data = snap.data();
 
-  const giverId = data.playerOrder[data.currentPlayerIndex];
-  if (currentUserId === giverId) return; // dador no elige aquí
+  const cueId = data.playerOrder[data.currentPlayerIndex];
+  if (currentUserId === cueId) return; // dador no adivina
 
   const myGuesses = data.guesses?.[currentUserId] || [];
-  const can =
-    (data.gameState === "guessing_1" && myGuesses.length === 0) ||
-    (data.gameState === "guessing_2" && myGuesses.length === 1);
-  if (!can) return;
+  const canGuessNow = (data.gameState === "guessing_1" && myGuesses.length === 0) ||
+                      (data.gameState === "guessing_2" && myGuesses.length === 1);
+  if (!canGuessNow) return;
 
-  const x = parseInt(cell.dataset.x, 10);
-  const y = parseInt(cell.dataset.y, 10);
+  playClick();
+  temporaryGuess = { x: parseInt(cell.dataset.x), y: parseInt(cell.dataset.y) };
+  renderBoard(data);
+  renderControls(data);
+});
 
-  const updated = { ...data.guesses, [currentUserId]: [...myGuesses, { x, y }] };
-  await updateDoc(gameRef, { guesses: updated });
+async function confirmGuess() {
+  if (!temporaryGuess) return;
 
-  // pasar a segunda pista si todos eligieron
-  const guessers = data.playerOrder.filter(id => id !== giverId);
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  const snap = await getDoc(gameRef);
+  const data = snap.data();
+
+  const myGuesses = data.guesses?.[currentUserId] || [];
+  const updatedGuesses = {
+    ...data.guesses,
+    [currentUserId]: [...myGuesses, temporaryGuess]
+  };
+
+  temporaryGuess = null;
+  await updateDoc(gameRef, { guesses: updatedGuesses });
+
+  const cueId = data.playerOrder[data.currentPlayerIndex];
+  const guessers = data.playerOrder.filter(id => id !== cueId);
   const required = data.gameState === "guessing_1" ? 1 : 2;
-  const all = guessers.every(id => (updated[id]?.length || 0) >= required);
+  const all = guessers.every(id => (updatedGuesses[id]?.length || 0) >= required);
+
   if (all && data.gameState === "guessing_1") {
     await updateDoc(gameRef, { gameState: "giving_clue_2" });
   }
 }
 
-// =========================
-// Revelar y puntuar
-// =========================
+/* =========================
+   PISTAS Y COLOR SECRETO
+========================= */
+const FORBIDDEN = [
+  "rojo","verde","azul","amarillo","naranja","morado","violeta","rosa","marrón",
+  "negro","blanco","gris","cian","magenta","turquesa","lila","fucsia","celeste",
+  "índigo","añil","purpura","escarlata","carmín","granate","oliva","esmeralda",
+  "zafiro","cobalto","ocre","siena","beis","beige","crema","dorado","plateado",
+  "bronce","cobre","color","tono","matiz","claro","oscuro","brillante","pálido",
+  "aguamarina","coral","lavanda","malva","salmón","terracota","caqui"
+];
+
+$("clue-input")?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") { e.preventDefault(); $("submit-clue-btn").click(); }
+});
+
+async function submitClue(n) {
+  const input = $("clue-input");
+  let word = (input.value || "").trim();
+  const first = word.split(" ")[0].toLowerCase();
+  if (!first) return;
+
+  if (FORBIDDEN.includes(first)) {
+    alert(`La palabra "${first}" no está permitida. Usa una pista que no sea un color.`);
+    input.value = "";
+    return;
+  }
+
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  const snap = await getDoc(gameRef);
+  const data = snap.data();
+
+  await updateDoc(gameRef, {
+    clues: [...(data.clues || []), first],
+    gameState: n === 1 ? "guessing_1" : "guessing_2"
+  });
+
+  input.value = "";
+}
+
+$("candidate-swatches")?.addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-x]");
+  if (!btn) return;
+
+  const x = parseInt(btn.dataset.x);
+  const y = parseInt(btn.dataset.y);
+  const color = getHexAt(y, x);
+
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  await updateDoc(gameRef, {
+    currentCard: { x, y, color }
+  });
+});
+
+/* =========================
+   INICIO PARTIDA / RONDAS
+========================= */
+async function startGame() {
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  const snap = await getDoc(gameRef);
+  const data = snap.data();
+
+  if (data.hostId !== currentUserId) { alert("Solo el creador puede empezar."); return; }
+  if (Object.keys(data.players).length < 2) { alert("Se necesitan al menos 2 jugadores."); return; }
+
+  const gridSetting = $("grid-size-select").value || "30x16";
+  const crop = gridSetting === "12x8"
+    ? randomCrop(GRID_FULL, GRID_SMALL)
+    : { rowStart: 0, colStart: 0 };
+
+  await updateDoc(gameRef, {
+    gameSettings: {
+      ...data.gameSettings,
+      gridSize: gridSetting
+    },
+    currentCrop: crop,
+    gameState: "giving_clue_1",
+    currentRound: 1,
+    currentPlayerIndex: 0,
+    currentCard: null, // se elige de las 4
+    clues: [],
+    guesses: {},
+    candidateColors: randomCandidates(crop, gridSetting)
+  });
+}
+
+/** recorte aleatorio para 12x8 */
+function randomCrop(full, small) {
+  const rowStart = Math.floor(Math.random() * (full.rows - small.rows + 1));
+  const colStart = Math.floor(Math.random() * (full.cols - small.cols + 1));
+  return { rowStart, colStart };
+}
+
+/** 4 candidatos aleatorios sobre el tablero visible */
+function randomCandidates(crop, gridSetting) {
+  const spec = gridSpecFromSetting(gridSetting);
+  const set = new Set();
+  while (set.size < 4) {
+    const vy = Math.floor(Math.random() * spec.rows);
+    const vx = Math.floor(Math.random() * spec.cols);
+    const y = crop.rowStart + vy;
+    const x = crop.colStart + vx;
+    set.add(`${y},${x}`);
+  }
+  return Array.from(set).map(s => {
+    const [y,x] = s.split(",").map(Number);
+    return { x, y, color: getHexAt(y,x) };
+  });
+}
+
+function renderCandidates(gameData) {
+  const wrap = $("candidate-swatches");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const cueId = gameData.playerOrder[gameData.currentPlayerIndex];
+  const isCue = currentUserId === cueId;
+
+  if (!isCue || !gameData.candidateColors || gameData.candidateColors.length === 0) return;
+
+  gameData.candidateColors.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "swatch";
+    b.style.background = c.color;
+    b.dataset.x = c.x;
+    b.dataset.y = c.y;
+    wrap.appendChild(b);
+  });
+}
+
+/* =========================
+   PUNTUACIÓN / RESÚMENES
+========================= */
 async function reveal() {
   const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
   await updateDoc(gameRef, { gameState: "scoring" });
@@ -779,86 +745,88 @@ async function calculateAndShowScores() {
   const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
   const snap = await getDoc(gameRef);
   const data = snap.data();
-  const { x: tx, y: ty } = data.currentCard;
-  const giverId = data.playerOrder[data.currentPlayerIndex];
 
-  const updatedPlayers = JSON.parse(JSON.stringify(data.players));
+  const { x: targetX, y: targetY } = data.currentCard;
+  const cueId = data.playerOrder[data.currentPlayerIndex];
+  let cuePoints = 0;
   const roundPoints = {};
+  const updatedPlayers = JSON.parse(JSON.stringify(data.players));
+
   Object.keys(updatedPlayers).forEach(pid => roundPoints[pid] = { name: updatedPlayers[pid].name, points: 0 });
 
-  let cueGiverPoints = 0;
-
-  Object.entries(data.guesses).forEach(([pid, arr]) => {
+  Object.entries(data.guesses || {}).forEach(([pid, guesses]) => {
     let pRound = 0;
-    arr.forEach(g => {
-      const dx = Math.abs(g.x - tx);
-      const dy = Math.abs(g.y - ty);
+    guesses.forEach(g => {
+      const dx = Math.abs(g.x - targetX);
+      const dy = Math.abs(g.y - targetY);
       let pts = 0;
       if (dx === 0 && dy === 0) pts = 3;
       else if (dx <= 1 && dy <= 1) pts = 2;
       else if (dx <= 2 && dy <= 2) pts = 1;
       pRound += pts;
-
-      if (pid !== giverId && dx <= 1 && dy <= 1) cueGiverPoints++;
+      if (pid !== cueId && dx <= 1 && dy <= 1) cuePoints++;
     });
     updatedPlayers[pid].score += pRound;
     roundPoints[pid].points = pRound;
   });
 
-  updatedPlayers[giverId].score += cueGiverPoints;
-  roundPoints[giverId].points = cueGiverPoints;
+  updatedPlayers[cueId].score += cuePoints;
+  roundPoints[cueId].points = cuePoints;
 
   await updateDoc(gameRef, { players: updatedPlayers, lastRoundSummary: roundPoints });
 
-  const winner = Object.values(updatedPlayers).find(p => p.score >= (data.gameSettings.scoreLimit || DEFAULT_SCORE_LIMIT));
+  const winner = Object.values(updatedPlayers).find(p => p.score >= data.gameSettings.scoreLimit);
   const roundLimitReached = data.currentRound >= data.gameSettings.roundLimit;
 
   if (winner || roundLimitReached) {
     await updateDoc(gameRef, { gameState: "gameOver" });
+    showGameOver({ players: updatedPlayers, playerOrder: data.playerOrder });
   } else {
     await updateDoc(gameRef, { gameState: "roundSummary" });
+    showRoundSummary({ lastRoundSummary: roundPoints, currentRound: data.currentRound, gameSettings: data.gameSettings });
   }
 }
 
-// =========================
-// Resumen, siguiente ronda
-// =========================
-document.getElementById("next-round-btn").addEventListener("click", async () => {
+function showRoundSummary(data) {
+  $("summary-title").textContent = `Fin de la Ronda ${data.currentRound} / ${data.gameSettings.roundLimit}`;
+  const content = $("summary-content");
+  content.innerHTML = Object.values(data.lastRoundSummary).map(p => `<p><strong>${p.name}:</strong> +${p.points} puntos</p>`).join("");
+  roundSummaryModal.classList.remove("hidden");
+}
+
+async function gotoNextRound() {
+  roundSummaryModal.classList.add("hidden");
+
   const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
   const snap = await getDoc(gameRef);
   const data = snap.data();
 
-  // siguiente jugador
   const nextIdx = (data.currentPlayerIndex + 1) % data.playerOrder.length;
   const nextRound = nextIdx === 0 ? data.currentRound + 1 : data.currentRound;
 
-  // recalcular grid pequeño si corresponde
-  const gs = data.gameSettings.gridSize || "30x16";
-  const { rows, cols } = GRID_SIZES[gs];
-  let originRow = 0, originCol = 0;
-  if (gs === "12x8") {
-    originRow = Math.floor(Math.random() * (16 - rows + 1));
-    originCol = Math.floor(Math.random() * (30 - cols + 1));
-  }
-  const gridConfig = { size: gs, rows, cols, originRow, originCol };
+  const gridSetting = data.gameSettings.gridSize || "30x16";
+  const crop = gridSetting === "12x8" ? randomCrop(GRID_FULL, GRID_SMALL) : { rowStart: 0, colStart: 0 };
 
   await updateDoc(gameRef, {
-    gameState: "choose_secret",
+    gameState: "giving_clue_1",
     currentRound: nextRound,
     currentPlayerIndex: nextIdx,
-    gridConfig,
     currentCard: null,
     clues: [],
-    guesses: {}
+    guesses: {},
+    currentCrop: crop,
+    candidateColors: randomCandidates(crop, gridSetting)
   });
-
-  roundSummaryModal.classList.add("hidden");
-});
+}
 
 function showGameOver(data) {
-  document.getElementById("winner-name").textContent =
-    data.playerOrder.reduce((a, b) => data.players[a].score > data.players[b].score ? a : b);
+  const winnerId = data.playerOrder.reduce((a,b) => data.players[a].score > data.players[b].score ? a : b);
+  $("winner-name").textContent = data.players[winnerId].name;
   gameOverModal.classList.remove("hidden");
+
+  const canvas = $("confetti-canvas");
+  const myConfetti = confetti.create(canvas, { resize: true });
+  myConfetti({ particleCount: 200, spread: 160, origin: { y: 0.6 } });
 }
 
 async function restartGame() {
@@ -866,26 +834,52 @@ async function restartGame() {
   const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
   const snap = await getDoc(gameRef);
   const data = snap.data();
-  if (currentUserId !== data.hostId) { alert("Solo el anfitrión puede reiniciar"); return; }
+  if (currentUserId !== data.hostId) { alert("Solo el anfitrión puede reiniciar la partida."); return; }
 
   const resetPlayers = {};
   data.playerOrder.forEach(pid => resetPlayers[pid] = { ...data.players[pid], score: 0 });
+
   await updateDoc(gameRef, { players: resetPlayers, gameState: "waiting" });
   gameOverModal.classList.add("hidden");
 }
 
-// =========================
-// Inicialización UI mínima
-// =========================
-function renderTitle(data) {
-  const title = document.getElementById("game-title");
-  const names = data.playerOrder.map(pid => data.players[pid].name);
-  title.textContent = names.length === 2 ? `${names[0]} vs ${names[1]}` : "Partida grupal";
+/* =========================
+   EVENTOS OPCIONES HOST
+========================= */
+$("round-limit").addEventListener("change", (e) => updateSettings({ roundLimit: parseInt(e.target.value || "10", 10) }));
+$("score-limit").addEventListener("change", (e) => updateSettings({ scoreLimit: parseInt(e.target.value || `${DEFAULT_SCORE_LIMIT}`, 10) }));
+$("grid-size-select").addEventListener("change", (e) => updateSettings({ gridSize: e.target.value }));
+
+async function updateSettings(newSet) {
+  if (!currentGameId) return;
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  const snap = await getDoc(gameRef);
+  const data = snap.data();
+  await updateDoc(gameRef, { gameSettings: { ...data.gameSettings, ...newSet } });
 }
 
-// Integrar renderTitle dentro de updateUI
+/* =========================
+   INICIALIZACIÓN
+========================= */
+function initialRender() {
+  // nada más cargar, por si hay algo pendiente
+}
+initialRender();
+renderCandidates({}); // no muestra nada si no es dador
+
+// Redibuja candidatos cuando cambie el estado
+document.addEventListener("visibilitychange", async () => {
+  if (!currentGameId) return;
+  const gameRef = doc(db, `artifacts/${APP_ID}/public/data/games`, currentGameId);
+  const snap = await getDoc(gameRef);
+  if (snap.exists()) renderCandidates(snap.data());
+});
+
+/* Hook dentro de updateUI para candidatos */
 const _origUpdateUI = updateUI;
-updateUI = function(data) {
-  _origUpdateUI.call(this, data);
-  if (data && data.players) renderTitle(data);
+updateUI = function(g) {
+  _origUpdateUI(g);
+  renderCandidates(g);
+  if (g.gameState === "gameOver") showGameOver(g); // por si entra directo
+  if (g.gameState === "roundSummary") showRoundSummary(g);
 };
