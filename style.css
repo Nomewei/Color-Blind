@@ -1,8 +1,18 @@
-/* ========== Base y tema oscuro ========== */
+/* ============ Base ============ */
+:root{
+  --bg:#121212;
+  --panel:#1E1E1E;
+  --ink:#E0E0E0;
+  --cyan:#22d3ee;
+  --border:#333;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
-  font-family:'Inter',sans-serif;
+  font-family:'Inter',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
   background:#121212;
-  color:#E0E0E0;
+  color:var(--ink);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -10,49 +20,280 @@ body{
   padding:1rem;
   touch-action:manipulation;
 }
+
 .card{
-  background:#1E1E1E;
+  background:var(--panel);
   padding:2rem;
   border-radius:.75rem;
-  border:1px solid #333;
+  border:1px solid var(--border);
   box-shadow:0 10px 25px rgba(0,0,0,.3);
 }
+
 .input-field{
   width:100%;
   padding:.75rem 1rem;
   border:1px solid #444;
   border-radius:.375rem;
   background:#2a2a2a;
-  color:#E0E0E0;
-  transition:border-color .3s, box-shadow .3s;
+  color:var(--ink);
+  transition:border-color .2s, box-shadow .2s;
 }
 .input-field:focus{
   outline:none;
-  border-color:#22d3ee;
+  border-color:var(--cyan);
   box-shadow:0 0 0 3px rgba(34,211,238,.2);
 }
+
 .btn-primary{
   background:#0891b2;
   color:#fff;
   font-weight:700;
   padding:.8rem 1rem;
   border-radius:.375rem;
-  transition:background-color .3s, transform .05s;
   border:none;
   cursor:pointer;
-  white-space:nowrap;
+  transition:filter .2s,transform .02s;
 }
-.btn-primary:hover{ background:#0e7490 }
-.btn-primary:active{ transform:scale(.98) }
+.btn-primary:hover{ filter:brightness(1.05) }
+.btn-primary:active{ transform:translateY(1px) }
+
 .btn-secondary{
   background:#374151;
   color:#fff;
   font-weight:700;
   padding:.8rem 1rem;
   border-radius:.375rem;
-  transition:background-color .3s;
   border:none;
   cursor:pointer;
+  transition:filter .2s,transform .02s;
+}
+.btn-secondary:hover{ filter:brightness(1.06) }
+
+/* ============ Grid contenedor ============ */
+#color-grid-container{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:1rem 0 0;
+  margin-inline:auto;
+}
+
+/* Tamaño general: centrado y grande para 30x16 en desktop */
+#color-grid{
+  display:grid;
+  gap:1px;                 /* líneas de la cuadrícula */
+  background:#111;         /* color de líneas */
+  border:2px solid #444;
+  border-radius:12px;
+  overflow:hidden;
+  width:clamp(320px, 92vw, 1200px);   /* más grande en PC, responsive en móvil */
+}
+
+/* Las celdas son cuadrados perfectos */
+.color-cell{
+  width:100%;
+  padding-bottom:100%;
+  position:relative;
+  cursor:pointer;
+  transition:transform .06s ease-in-out;
+}
+.color-cell:hover{
+  transform:scale(1.04);
+  z-index:2;
+  border-radius:4px;
+}
+
+/* ============ Marcadores (jugadores) ============ */
+.player-marker{
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  display:flex; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+
+/* Móvil: ficha circular con inicial */
+.player-marker{
+  width:60%;
+  height:60%;
+  border-radius:50%;
+  border:3px solid rgba(255,255,255,.9);
+  box-shadow:0 6px 14px rgba(0,0,0,.35);
+}
+.player-marker .initial{
+  font-size:14px;
+  font-weight:800;
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.5);
+}
+
+/* Desktop (>=1024px): peón de ajedrez, proporción correcta */
+@media (min-width:1024px){
+  .player-marker{
+    width:70%;
+    height:70%;
+    border:none;
+    border-radius:0;
+    background:transparent !important;
+    box-shadow:none;
+  }
+  .player-marker .initial{ display:none }
+}
+
+/* Pre-selección */
+.temp-marker{ filter:saturate(1.1) brightness(1.05) }
+
+/* ============ Overlays de puntuación ============ */
+.scoring-overlay{
+  position:absolute;
+  pointer-events:none;
+  box-sizing:border-box;
+  border-style:dashed;
+  border-radius:6px;
+  z-index:10;
+}
+
+#scoring-box-1{ border:3px dashed #ef4444; }  /* 5x5 (rojo) */
+#scoring-box-2{ border:3px dashed #facc15; }  /* 3x3 (amarillo) */
+#scoring-box-3{ border:3px dashed #ffffff; }  /* 1x1 (blanco) */
+
+/* ============ Resalto del color secreto (solo lo ve el dador) ============ */
+.secret-color-highlight{
+  outline:3px solid #fff;
+  outline-offset:-3px;
+  animation:blink 1.4s ease-in-out infinite;
+}
+@keyframes blink{
+  0%,100%{ box-shadow:0 0 0 rgba(255,255,255,0) }
+  50%{ box-shadow:0 0 0 6px rgba(135,206,250,.25) }
+}
+
+/* ============ Panel del dador (elección + pista) ============ */
+#cue-giver-view{
+  margin-bottom:1rem;
+  padding:1rem;
+  border:1px solid #2b9db0;
+  background:#17222b;
+  border-radius:.75rem;
+}
+#cue-giver-title{
+  text-align:center;
+  font-weight:700;
+  margin-bottom:.5rem;
+  color:#d6dee5;
+}
+#secret-color-display{
+  width:120px; height:52px;
+  margin:.3rem auto .1rem auto;
+  border-radius:.5rem;
+  border:3px solid rgba(255,255,255,.25);
+}
+#secret-color-coords{
+  text-align:center;
+  font-weight:800;
+  color:#67e8f9;
+}
+
+/* Muestras de 4 colores */
+#candidate-swatches{
+  display:flex;
+  gap:.75rem;
+  justify-content:center;
+  align-items:center;
+  margin-top:.6rem;
+}
+.swatch{
+  width:66px; height:42px;
+  border-radius:12px;
+  border:3px solid rgba(255,255,255,.55);
+  box-shadow:0 6px 14px rgba(0,0,0,.25);
+  cursor:pointer;
+  transition:transform .12s, filter .12s;
+}
+.swatch:hover{ transform:translateY(-2px); filter:brightness(1.06) }
+
+/* Formulario de pista: input + botón a la derecha */
+#clue-form .clue-row{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:.5rem;
+  margin-top:.75rem;
+}
+#clue-form .clue-row .input-field{
+  max-width:280px;
+}
+
+/* ============ Tip & elementos varios ============ */
+#clue-display{
+  display:flex;
+  justify-content:center;
+  gap:.5rem;
+  min-height:2.75rem;
+  margin-bottom:.25rem;
+}
+#clue-display span{
+  font-size:1rem;
+  font-weight:800;
+  background:#374151;
+  padding:.4rem .7rem;
+  border-radius:.5rem;
+  color:#f0f9ff;
+}
+
+.color-preview{
+  width:38px; height:38px;
+  border-radius:.375rem;
+  border:2px solid #6b7280;
+}
+
+/* Sonido */
+.sound-toggle{
+  position:fixed;
+  top:1rem; right:1rem;
+  width:40px; height:40px;
+  background:#374151;
+  border:2px solid #4b5563;
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:1000;
+}
+.sound-toggle svg{ width:24px; height:24px; color:#E0E0E0 }
+
+/* ============ Modales ============ */
+.modal-overlay{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.75);
+  display:flex; align-items:center; justify-content:center;
+  padding:1rem; z-index:50;
+}
+#confetti-canvas{
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  pointer-events:none; z-index:100;
+}
+
+/* ============ Responsive ajustes ============ */
+@media (max-width:1023px){
+  .card{ padding:1.25rem }
+  #color-grid{ width:92vw } /* móvil ocupa casi todo el ancho */
+  #cue-giver-view{ padding:1rem }
+  #secret-color-display{ width:110px; height:48px }
+  #candidate-swatches{ gap:.6rem }
+  .swatch{ width:56px; height:38px; border-radius:10px }
+}
+
+@media (min-width:1280px){
+  /* en desktop grande agrandamos aún más el 30x16 */
+  #color-grid{ width:min(92vw, 1280px) }
+}
+
+/* ============ Utilidades que ya usabas ============ */
+.fade-in{ animation:fadeIn .45s ease-in-out }
+@keyframes fadeIn{
+  from{opacity:0; transform:scale(.98)}
+  to{opacity:1; transform:scale(1)}
 }
 
 /* Paleta decorativa lobby */
@@ -63,211 +304,9 @@ body{
   border:2px solid #444;
 }
 
-/* ========== Grid de colores ========== */
-#color-grid-container{
-  position:relative;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:.25rem;
-}
-.color-grid{
-  display:grid;
-  gap:1px;
-  width:100%;
-  margin:0 auto;
-  border-radius:12px;
-  overflow:hidden;
-  border:2px solid #444;
-  background:#222;
-  /* en móvil centrado y ancho fluido */
-  max-width:94vw;
-}
-.color-cell{
-  /* cuadradas por aspecto, más robusto que padding-bottom */
-  aspect-ratio:1 / 1;
-  position:relative;
-  cursor:pointer;
-  transition:transform .08s ease-in-out, box-shadow .08s ease-in-out;
-}
-.color-cell:hover{
-  transform:scale(1.06);
-  z-index:2;
-  border-radius:6px;
-  box-shadow:0 0 10px rgba(255,255,255,.35);
-}
-
-/* ========== Ficha del jugador ========== */
-.player-marker{
-  position:absolute;
-  top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  width:62%; height:62%;
-  aspect-ratio:1 / 1;
-  border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  border:2px solid rgba(255,255,255,.95);
-  box-shadow:0 6px 14px rgba(0,0,0,.45), inset 0 0 0 3px rgba(255,255,255,.12);
-  background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.18), rgba(255,255,255,0) 55%);
-}
-.player-marker .initial{
-  font-weight:800;
-  color:#fff;
-  font-size:clamp(10px, .9vw, 14px);
-  line-height:1;
-  text-shadow:0 1px 2px rgba(0,0,0,.6);
-}
-.temp-marker{
-  border-style:dashed;
-  background:transparent;
-  backdrop-filter:blur(1px);
-}
-
-/* ========== Marco de puntuación ========== */
-.scoring-overlay{
-  position:absolute;
-  pointer-events:none;
-  box-sizing:border-box;
-  border-style:dashed;
-  border-radius:6px;
-}
-#scoring-box-3{ border:3px dashed #fff }
-#scoring-box-2{ border:3px dashed #facc15 }
-#scoring-box-1{ border:3px dashed #ef4444 }
-
-/* ========== Panel del dador ========== */
-#cue-giver-view{
-  text-align:center;
-  margin-bottom:.75rem;
-  padding:1rem;
-  border:1px solid #1f9ac5;
-  background:#111a22;
-  border-radius:.75rem;
-}
-#secret-color-display{
-  width:5.5rem; height:2.2rem;
-  border-radius:.5rem;
-  border:3px solid rgba(255,255,255,.25);
-  margin:.5rem auto;
-  box-shadow:inset 0 0 0 3px rgba(0,0,0,.25);
-}
-#secret-color-coords{
-  font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-weight:800;
-  color:#67e8f9;
-}
-
-/* Candidatos del color secreto */
-.candidate-swatches{
-  display:grid;
-  grid-template-columns:repeat(4, minmax(0,1fr));
-  gap:.5rem;
-  margin:.5rem 0 0;
-  justify-items:center;
-}
-.candidate-swatches .swatch{
-  width:56px; height:36px;
-  border-radius:.5rem;
-  border:2px solid rgba(255,255,255,.35);
-  box-shadow:0 2px 6px rgba(0,0,0,.35);
-  cursor:pointer;
-  transition:transform .06s ease, box-shadow .06s ease, border-color .06s ease;
-}
-.candidate-swatches .swatch:hover{ transform:translateY(-1px) }
-.candidate-swatches .swatch.selected{
-  border:3px solid #22d3ee;
-  box-shadow:0 0 0 3px rgba(34,211,238,.2);
-}
-
-/* ========== Pistas ========== */
-#clue-display{
-  text-align:center;
-  margin-bottom:.5rem;
-  min-height:2.25rem;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:.5rem;
-}
-#clue-display span{
-  font-size:1.1rem;
-  font-weight:800;
-  background:#2b3441;
-  padding:.35rem .7rem;
-  border-radius:.5rem;
-  color:#f0f9ff;
-  border:1px solid rgba(255,255,255,.08);
-}
-
-/* Input + botón en línea, misma altura */
-#clue-form .clue-row{
-  display:flex;
-  align-items:stretch;
-  gap:.5rem;
-}
-#clue-form input[type="text"]{
-  flex:1;
-}
-#clue-form .btn-primary{
-  height:44px; /* igual a input aproximado */
-  display:flex; align-items:center; justify-content:center;
-}
-
-/* ========== Modales ========== */
-.modal-overlay{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.75);
-  display:flex; align-items:center; justify-content:center;
-  padding:1rem; z-index:50;
-}
-#confetti-canvas{ position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:100 }
+/* Título ganador */
 .winner-text{ animation:bounce 1s ease-in-out }
-@keyframes bounce{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-
-/* Botón sonido */
-.sound-toggle{
-  position:fixed; top:1rem; right:1rem;
-  width:40px; height:40px;
-  background:#374151; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; z-index:1000; border:2px solid #4b5563;
-}
-.sound-toggle svg{ width:24px; height:24px; color:#E0E0E0 }
-
-/* Previsualización color elegido */
-.color-preview{
-  width:36px; height:36px;
-  border-radius:.375rem;
-  border:2px solid #6b7280;
-}
-
-/* ========== Responsive móvil ========== */
-@media (max-width:1023px){
-  .card{ padding:1.25rem }
-  .color-grid{ max-width:94vw } /* ya centrado y fluido en móvil */
-  .candidate-swatches .swatch{ width:48px; height:32px }
-  #secret-color-display{ width:4.5rem; height:1.8rem }
-  #clue-display span{ font-size:1rem; padding:.25rem .6rem }
-}
-
-/* ========== Desktop: tablero más pequeño y sin scroll ========== */
-@media (min-width:1024px){
-  /* el tablero no ocupa toda la tarjeta en PC */
-  .color-grid{
-    /* ancho moderado, centrado, evita scroll vertical en 30x16 */
-    width:clamp(640px, 52vw, 880px);
-    max-width:880px;
-  }
-  /* pulido del hover para celdas pequeñas en PC */
-  .color-cell:hover{
-    transform:scale(1.045);
-    box-shadow:0 0 8px rgba(255,255,255,.28);
-  }
-  /* ficha un poco más contenida en PC */
-  .player-marker{ width:58%; height:58%; border-width:2px }
-}
-
-/* Desktop grande */
-@media (min-width:1440px){
-  .color-grid{ width:clamp(680px, 44vw, 880px) }
+@keyframes bounce{
+  0%,100%{ transform:translateY(0) }
+  50%{ transform:translateY(-10px) }
 }
