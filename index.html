@@ -25,18 +25,20 @@
   <div id="app-container">
     <!-- LOBBY SCREEN -->
     <div id="lobby-screen" class="card text-center fade-in">
-      <div class="color-palette mb-6">
-        <div class="palette-square" style="background-color:#ef4444"></div>
-        <div class="palette-square" style="background-color:#f97316"></div>
-        <div class="palette-square" style="background-color:#eab308"></div>
-        <div class="palette-square" style="background-color:#22c55e"></div>
-        <div class="palette-square" style="background-color:#3b82f6"></div>
-        <div class="palette-square" style="background-color:#8b5cf6"></div>
-        <div class="palette-square" style="background-color:#d946ef"></div>
+      <!-- Logo -->
+      <div class="flex flex-col items-center justify-center mb-6">
+        <div class="flex justify-center gap-1.5 mb-3">
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#ef4444"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#f97316"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#eab308"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#22c55e"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#3b82f6"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#6366f1"></div>
+            <div class="w-8 h-8 rounded-lg shadow-md" style="background-color:#8b5cf6"></div>
+        </div>
+        <h1 class="text-5xl font-extrabold text-cyan-300 tracking-tight">Hue Hunt</h1>
       </div>
-
-      <h1 class="text-4xl font-extrabold text-cyan-300 mb-2">Hue Hunt</h1>
-      <p class="text-gray-400 mb-6">El juego de adivinar colores online.</p>
+      <p class="text-gray-400 mb-8 text-lg">Un emocionante juego de comunicación para adivinar colores.</p>
 
       <div class="mb-4">
         <label for="player-name" class="block text-sm font-medium text-gray-300 mb-1 text-left">Tu nombre</label>
@@ -91,6 +93,7 @@
       <button id="start-game-btn" class="btn-primary w-full">Empezar partida</button>
       <button id="exit-lobby-btn" class="btn-secondary w-full mt-2">Volver al inicio</button>
       <p id="start-game-helper" class="text-xs text-gray-500 mt-2">Solo el creador de la partida puede empezar.</p>
+      <p id="waiting-room-error" class="text-rose-400 mt-2 h-4"></p>
     </div>
 
     <!-- GAME SCREEN -->
@@ -124,6 +127,7 @@
               <input id="clue-input" class="input-field" placeholder="Pista de 1 palabra" />
               <button id="submit-clue-btn" class="btn-primary whitespace-nowrap">Dar Pista 1</button>
             </div>
+             <p id="clue-error" class="text-rose-400 mt-2 h-4"></p>
           </div>
 
           <!-- Clue Display -->
@@ -173,6 +177,7 @@
         <p class="text-xl text-gray-300 mb-2">El ganador es...</p>
         <p id="winner-name" class="text-5xl font-bold text-cyan-300 mb-8"></p>
         <button id="new-game-btn" class="btn-primary w-full">Jugar de nuevo</button>
+        <p id="game-over-error" class="text-rose-400 mt-2 h-4"></p>
       </div>
     </div>
   </div>
