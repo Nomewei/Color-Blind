@@ -234,7 +234,7 @@ function subscribeToGame(gameId) {
     unsubscribeGame = onSnapshot(gameRef, (docSnap) => {
         if (!docSnap.exists()) {
             localStorage.removeItem("hue-hunt-game");
-            alert("El anfitrión ha terminado la partida.");
+            // alert("El anfitrión ha terminado la partida."); // Removed alert
             executeLeave(); return;
         }
         const data = docSnap.data();
@@ -257,26 +257,40 @@ function copyGameId() {
 // ===============================
 async function startGame() {
     if (!currentGameId) return;
+    const errorP = document.getElementById("waiting-room-error");
+    if (errorP) errorP.textContent = "";
+
     const gameRef = doc(gamesCollection, currentGameId);
     const snap = await getDoc(gameRef);
     const data = snap.data();
 
-    if (data.hostId !== currentUserId) { alert("Solo el creador puede empezar."); return; }
-    if (Object.keys(data.players).length < 2) { alert("Se necesitan al menos 2 jugadores."); return; }
+    if (data.hostId !== currentUserId) {
+        if (errorP) errorP.textContent = "Solo el creador puede empezar la partida.";
+        return;
+    }
+    if (Object.keys(data.players).length < 2) {
+        if (errorP) errorP.textContent = "Se necesitan al menos 2 jugadores para empezar.";
+        return;
+    }
 
     const { gridMode } = data.gameSettings;
     const view = gridMode === "12x8" ? randomWindow12x8() : { startX: 0, startY: 0, cols: 30, rows: 16 };
 
     const newCard = { x: null, y: null, color: null }; // Dador must choose
-    await updateDoc(gameRef, {
-        gameState: "giving_clue_1",
-        currentRound: 1,
-        currentPlayerIndex: 0,
-        currentCard: newCard,
-        clues: [],
-        guesses: {},
-        viewWindow: view
-    });
+    try {
+        await updateDoc(gameRef, {
+            gameState: "giving_clue_1",
+            currentRound: 1,
+            currentPlayerIndex: 0,
+            currentCard: newCard,
+            clues: [],
+            guesses: {},
+            viewWindow: view
+        });
+    } catch (err) {
+        console.error("Error starting game:", err);
+        if (errorP) errorP.textContent = "Error al iniciar la partida. Inténtalo de nuevo.";
+    }
 }
 
 function randomWindow12x8() {
@@ -668,12 +682,15 @@ async function chooseSecret(cand) {
 
 async function submitClue(n) {
     const input = document.getElementById("clue-input");
+    const errorP = document.getElementById("clue-error");
+    if(errorP) errorP.textContent = "";
+
     const text = (input.value || "").trim();
     const firstWord = text.split(/\s+/)[0].toLowerCase();
     if (!firstWord) return;
 
     if (FORBIDDEN_WORDS.includes(firstWord)) {
-        alert(`La palabra "${firstWord}" no está permitida. Usa una pista que no sea un color.`);
+        if(errorP) errorP.textContent = `La palabra "${firstWord}" no está permitida.`;
         input.value = ""; return;
     }
 
@@ -681,7 +698,7 @@ async function submitClue(n) {
     const data = latestGameData;
 
     if (data.currentCard?.x == null) {
-        alert("Primero elige una de las 4 muestras como color secreto.");
+        if(errorP) errorP.textContent = "Primero elige un color secreto.";
         return;
     }
 
@@ -791,11 +808,17 @@ function showGameOver(data) {
 
 async function restartGame() {
     if (!currentGameId) return;
+    const errorP = document.getElementById("game-over-error");
+    if(errorP) errorP.textContent = "";
+
     const gameRef = doc(gamesCollection, currentGameId);
     const snap = await getDoc(gameRef);
     if (!snap.exists()) return;
     const data = snap.data();
-    if (currentUserId !== data.hostId) { alert("Solo el anfitrión puede reiniciar la partida."); return; }
+    if (currentUserId !== data.hostId) { 
+        if(errorP) errorP.textContent = "Solo el anfitrión puede reiniciar la partida.";
+        return; 
+    }
 
     const resetPlayers = {};
     data.playerOrder.forEach(pid => resetPlayers[pid] = { ...data.players[pid], score: 0 });
