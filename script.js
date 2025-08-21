@@ -255,27 +255,33 @@ function copyGameId() {
 // Game Flow
 // ===============================
 async function startGame() {
-    if (!currentGameId || !latestGameData) return;
+    if (!currentGameId) return;
     const errorP = document.getElementById("waiting-room-error");
     if (errorP) errorP.textContent = "";
 
-    const data = latestGameData; // Use cached data instead of fetching again
-
-    if (data.hostId !== currentUserId) {
-        if (errorP) errorP.textContent = "Solo el creador puede empezar la partida.";
-        return;
-    }
-    if (Object.keys(data.players).length < 2) {
-        if (errorP) errorP.textContent = "Se necesitan al menos 2 jugadores para empezar.";
-        return;
-    }
-
     const gameRef = doc(gamesCollection, currentGameId);
-    const { gridMode } = data.gameSettings;
-    const view = gridMode === "12x8" ? randomWindow12x8() : { startX: 0, startY: 0, cols: 30, rows: 16 };
-
-    const newCard = { x: null, y: null, color: null }; // Dador must choose
+    
     try {
+        const snap = await getDoc(gameRef);
+        if (!snap.exists()) {
+            if (errorP) errorP.textContent = "La partida ya no existe.";
+            return;
+        }
+        const data = snap.data();
+
+        if (data.hostId !== currentUserId) {
+            if (errorP) errorP.textContent = "Solo el creador puede empezar la partida.";
+            return;
+        }
+        if (Object.keys(data.players).length < 2) {
+            if (errorP) errorP.textContent = "Se necesitan al menos 2 jugadores para empezar.";
+            return;
+        }
+
+        const { gridMode } = data.gameSettings;
+        const view = gridMode === "12x8" ? randomWindow12x8() : { startX: 0, startY: 0, cols: 30, rows: 16 };
+
+        const newCard = { x: null, y: null, color: null }; // Dador must choose
         await updateDoc(gameRef, {
             gameState: "giving_clue_1",
             currentRound: 1,
